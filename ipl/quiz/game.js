@@ -5,7 +5,7 @@ var TIMER_MS=12000, GAP_MS=1400, TEASE_EVERY=5000;
 var P=new URLSearchParams(location.search);
 var SIM=P.get('sim')==='1',AUTO=P.get('auto')==='1', FAST=parseFloat(P.get('speed')||'1');
 var DBG=P.get('debug')==='1',EV=[],T0=Date.now();
-function ev(k){if(DBG)EV.push({t:Date.now()-T0,ev:k,face:($('face').src.indexOf('sad')>=0?'sad':'smile')});}
+function ev(k){if(DBG){var fs=$('face').src;EV.push({t:Date.now()-T0,ev:k,face:fs.indexOf('sad')>=0?'sad':fs.indexOf('tease')>=0?'tease':'smile'});}}
 var KEY='iplquiz.seen.v5';
 var seen={};try{seen=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
 if(P.get('reset')==='1'){seen={};try{localStorage.removeItem(KEY)}catch(e){}}
@@ -60,7 +60,11 @@ function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/sad.png';var av=f.parentNode;av.classList.remove('teasing');av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
 /* playful mocking waggle every tease (~5s during the timer); never swaps the face, so it can't hint the result */
-function teaseFace(){var av=$('face').parentNode;av.classList.remove('teasing');void av.offsetWidth;av.classList.add('teasing');ev('tease-face');}
+var teaseT=null;(new Image()).src='img/tease.png';
+function teaseFace(){var f=$('face'),av=f.parentNode;av.classList.remove('teasing');void av.offsetWidth;av.classList.add('teasing');
+ if(f.src.indexOf('sad.png')<0)f.src='img/tease.png';
+ clearTimeout(teaseT);teaseT=setTimeout(function(){if(f.src.indexOf('tease.png')>=0)f.src='img/smile.png';},1400/FAST);
+ ev('tease-face');}
 $('face').parentNode.addEventListener('animationend',function(e){if(e.animationName==='tease')this.classList.remove('teasing');});
 var D=null,order=[],score=0,asked=0,running=false;
 function buildOrder(){var rank={E:0,M:1,H:2};var g={E:[],M:[],H:[]};
