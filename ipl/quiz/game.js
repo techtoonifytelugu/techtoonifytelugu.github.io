@@ -4,6 +4,8 @@ var $=function(i){return document.getElementById(i)};
 var TIMER_MS=12000, GAP_MS=1400, TEASE_EVERY=5000;
 var P=new URLSearchParams(location.search);
 var SIM=P.get('sim')==='1',AUTO=P.get('auto')==='1', FAST=parseFloat(P.get('speed')||'1');
+var DBG=P.get('debug')==='1',EV=[],T0=Date.now();
+function ev(k){if(DBG)EV.push({t:Date.now()-T0,ev:k,face:($('face').src.indexOf('sad')>=0?'sad':'smile')});}
 var KEY='iplquiz.seen.v5';
 var seen={};try{seen=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
 if(P.get('reset')==='1'){seen={};try{localStorage.removeItem(KEY)}catch(e){}}
@@ -38,18 +40,18 @@ function playClip(a,maxMs,durMs){return new Promise(function(res){
   if(p&&p.catch)p.catch(function(err){if(done)return;clearTimeout(tm);done=true;if(err&&err.name==='NotAllowedError'&&tries++<3){waitUnblocked().then(function(){attempt()});}else res(false);});}
  attempt();});}
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms/FAST)})}
-/* ---- Minni content (text only; no voice for teases) ---- */
+/* ---- Mini content (text only; no voice for teases) ---- */
 var TEASE=[
  'ఏమిటి అందరూ ఇంకా ఆలోచిస్తున్నారా? ఇది మీకు తెలిసే ఉంటుంది!',
  'కామెంట్స్‌లో మీ సమాధానం రాయండి, నేను చూస్తున్నాను!',
- 'మిన్ని సమాధానం చెప్పేస్తే మజా ఉండదు, మీరు చెప్పండి!',
+ 'మిని సమాధానం చెప్పేస్తే మజా ఉండదు, మీరు చెప్పండి!',
  'టైమ్ అయిపోతోంది, త్వరగా త్వరగా!',
  'హ్మ్... ఈ ఆప్షన్ మీద నాకు డౌట్ వస్తోంది!',
  'క్రికెట్ ఫ్యాన్స్ అంటే ఇలాంటివి ఈజీగా చెప్పేయాలి కదా!',
  'ఎవరు ముందు కరెక్ట్ చెబుతారో చూద్దాం!',
  'నా అంచనా నేను దాచుకున్నాను, చివరిలో చెబుతాను!'];
-var HAPPY=['మిన్ని నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిన్ని కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
-var SAD=['అయ్యో! ఈ సారి మిన్ని తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
+var HAPPY=['మిని నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిని కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
+var SAD=['అయ్యో! ఈ సారి మిని తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
 var TAGS={E:'EASY',M:'MEDIUM',H:'HARD'};
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
@@ -73,7 +75,7 @@ function renderQ(q,n){
  setFace(true);$('cstate').textContent='';$('cstate').className='chitti-state';$('ctease').textContent='';$('cans').textContent='';
  var ds=$('dots');ds.innerHTML='';for(var i=0;i<5;i++){var e=document.createElement('div');e.className='dot'+(i<(n-1)%5+1?'':' off');ds.appendChild(e);}
 }
-function minniGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
+function miniGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
 async function timerPhase(q,guess){
  var start=Date.now(),total=TIMER_MS/FAST,lastTick=-1,nextTease=1800/FAST,ti=0;
  $('tbar').style.transition='width '+(total/1000)+'s linear';$('tbar').style.width='100%';
@@ -83,7 +85,7 @@ async function timerPhase(q,guess){
   if(P.get('hold')==='timer'&&el>5000){$('ctease').textContent=TEASE[0];await new Promise(function(){});}
   var left=Math.ceil((total-el)*FAST/1000);$('timer').textContent='⏱ 00:'+(left<10?'0':'')+left;
   if(left<=5&&left!==lastTick){lastTick=left;sfx('tick');}
-  if(el>=nextTease&&total-el>1500/FAST){nextTease+=TEASE_EVERY/FAST;$('ctease').textContent=teases[ti++%teases.length];setFace(Math.random()<0.5);sfx('pop');
+  if(el>=nextTease&&total-el>1500/FAST){nextTease+=TEASE_EVERY/FAST;$('ctease').textContent=teases[ti++%teases.length];sfx('pop');ev('tease');
     $('cstate').textContent='';}
   await new Promise(function(r){setTimeout(r,100)});
  }
@@ -91,22 +93,25 @@ async function timerPhase(q,guess){
 }
 async function runQuestion(q,n){
  var qa=loadClip(q.id+'-q'),aa=loadClip(q.id+'-a');
- renderQ(q,n);sfx('whoosh');
+ renderQ(q,n);sfx('whoosh');ev('question');
  await sleep(500);
  await playClip(qa,q.qd+8000,q.qd);
- var guess=minniGuess(q);
+ var guess=miniGuess(q);
  await timerPhase(q,guess);
- /* reveal */
- for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
+ /* reveal: the answer voice and the visual reaction fire together, so the expression never lands before the answer */
  var ok=guess===q.c;score+=ok?1:0;
- $('score').textContent='మిన్ని స్కోరు '+score+' / '+n;
+ await sleep(350);
+ ev('answer-voice-start');
+ var played=playClip(aa,q.ad+8000,q.ad);
+ for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
+ $('score').textContent='మిని స్కోరు '+score+' / '+n;
  setFace(ok);sfx(ok?'ding':'sad');
  $('cstate').textContent=pick(ok?HAPPY:SAD);$('cstate').className='chitti-state'+(ok?'':' sad');
  $('ctease').textContent=q.why;
- $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిన్ని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
+ $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
+ ev('reveal-ui');
  if(P.get('hold')==='reveal'){await new Promise(function(){});}
- await sleep(350);
- await playClip(aa,q.ad+8000,q.ad);
+ await played;ev('answer-voice-end');
  seen[q.id]=1;saveSeen();
  await sleep(GAP_MS);
 }
@@ -134,7 +139,7 @@ async function sweep(){
  D.questions.forEach(function(q,k){
   renderQ(q,k+1);
   for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
-  $('cstate').textContent=wh;$('ctease').textContent=q.why;$('cans').innerHTML='<b>మిన్ని అంచనా: D. '+q.ote[3]+'</b>';
+  $('cstate').textContent=wh;$('ctease').textContent=q.why;$('cans').innerHTML='<b>మిని అంచనా: D. '+q.ote[3]+'</b>';
   var st=$('stage').getBoundingClientRect(),H=$('stage').offsetHeight,sc=st.height/H,c=$('chitti').getBoundingClientRect();
   var oo=$('opts').getBoundingClientRect(),w=0;document.querySelectorAll('.opt').forEach(function(e){w=Math.max(w,e.scrollWidth-e.clientWidth)});
   res.push({id:q.id,H:H,chittiBottom:Math.round((c.bottom-st.top)/sc),ratio:+(((c.bottom-st.top)/sc)/H).toFixed(3),optsBottom:Math.round((oo.bottom-st.top)/sc),overflowX:w});
@@ -142,5 +147,5 @@ async function sweep(){
  var pre=document.createElement('pre');pre.id='sweep';pre.textContent=JSON.stringify(res);document.body.appendChild(pre);
 }
 if(P.get('sweep')==='1'){document.fonts.ready.then(function(){setTimeout(sweep,1500)});}
-window.__ipl={status:function(){return {running:running,score:score,seen:Object.keys(seen).length,left:order.length}}};
+window.__ipl={status:function(){return {running:running,score:score,seen:Object.keys(seen).length,left:order.length}},log:function(){return EV}};
 })();
