@@ -8,3 +8,6 @@
 body.phone .cricket-display{max-height:210px;margin:10px 0 165px;border-radius:12px}
 body.phone .cricket-caption{font-size:10px;letter-spacing:1.7px;left:12px;top:8px;gap:7px}
 body.phone .cricket-caption i{width:4px;height:4px}
+
+/* Prevent focusing Start from scrolling the clipped stage on mobile Chrome. */
+#stage{overflow:clip}
