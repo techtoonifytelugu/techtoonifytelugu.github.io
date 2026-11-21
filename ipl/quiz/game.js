@@ -9,7 +9,8 @@ function ev(k){if(DBG){var fs=$('face').src;EV.push({t:Date.now()-T0,ev:k,face:f
 var KEY='iplquiz.seen.v5';
 var seen={};try{seen=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
 if(P.get('reset')==='1'){seen={};try{localStorage.removeItem(KEY)}catch(e){}}
-function saveSeen(){try{localStorage.setItem(KEY,JSON.stringify(seen))}catch(e){}}
+function saveSeen(){try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');for(var k in o)seen[k]=1;}catch(e){}try{localStorage.setItem(KEY,JSON.stringify(seen))}catch(e){}}
+function syncSeen(){try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');for(var k in o)seen[k]=1;}catch(e){}}
 function fit(){var st=$('stage');
  if(innerWidth<700&&innerHeight>innerWidth&&P.get('desk')!=='1'){ /* phone layout: same 3 sections, text sized for a handheld screen */
   document.body.classList.add('phone');var w=540,h0=innerHeight*540/innerWidth;if(h0<900)w=Math.round(540*900/h0);var h=Math.round(innerHeight*w/innerWidth);st.style.width=w+'px';st.style.height=h+'px';st.style.transform='scale('+(innerWidth/w)+')';}
@@ -28,7 +29,8 @@ function sfx(k){try{var a=ac(),t=a.currentTime;
 }catch(e){}}
 /* ---- voice clips ---- */
 var voice=new Audio();voice.preload='auto';
-function loadClip(name){var a=new Audio();a.preload='auto';a.src='clips/'+name+'.mp3';return a;}
+var CC={};function loadClip(name){if(CC[name]){var c=CC[name];delete CC[name];return c;}var a=new Audio();a.preload='auto';a.src='clips/'+name+'.mp3';return a;}
+function prefetch(q){if(!q||SIM)return;[q.id+'-q',q.id+'-a'].forEach(function(n){if(!CC[n]){var a=new Audio();a.preload='auto';a.src='clips/'+n+'.mp3';CC[n]=a;}});}
 var blockedWait=null;
 function waitUnblocked(){if(blockedWait)return blockedWait;$('start').style.display='flex';blockedWait=new Promise(function(r){window.__resume=function(){blockedWait=null;$('start').style.display='none';r();};});return blockedWait;}
 function playClip(a,maxMs,durMs,onstart){return new Promise(function(res){
@@ -105,12 +107,15 @@ async function timerPhase(q,guess){
  }
  $('timer').textContent='⏱ 00:00';
 }
+var NEXT=null;
 async function runQuestion(q,n){
  var qa=loadClip(q.id+'-q'),aa=loadClip(q.id+'-a');
+ seen[q.id]=1;saveSeen();
  renderQ(q,n);sfx('whoosh');ev('question');
  await sleep(500);
  await playClip(qa,q.qd+8000,q.qd);
  var guess=miniGuess(q);
+ prefetch(NEXT);
  await timerPhase(q,guess);
  /* reveal: every result-revealing change (score, highlight, expression, guess) fires only when the answer audio actually starts playing; the fallback runs only if the clip itself failed, so the expression can never precede the voice */
  var ok=guess===q.c;
@@ -129,7 +134,6 @@ async function runQuestion(q,n){
  var played=playClip(aa,q.ad+8000,q.ad,function(){reveal('answer-playing');});
  if(P.get('hold')==='reveal'){await new Promise(function(){});}
  await played;reveal('reveal-fallback');ev('answer-voice-end');
- seen[q.id]=1;saveSeen();
  await sleep(GAP_MS);
 }
 async function main(){
@@ -139,6 +143,8 @@ async function main(){
  if(D.intro&&!seen.__intro){var ia=loadClip('intro');$('qte').textContent='ఐపీఎల్ క్విజ్ షోకి స్వాగతం!';$('qen').textContent='Welcome to the IPL Quiz Show!';$('opts').innerHTML='';await playClip(ia,D.intro.d+6000,D.intro.d);seen.__intro=1;saveSeen();}
  var n=Object.keys(seen).filter(function(k){return k!=='__intro'}).length;
  for(var i=0;i<order.length;i++){
+  syncSeen();if(seen[order[i].id])continue;
+  NEXT=null;for(var j=i+1;j<order.length;j++){if(!seen[order[j].id]){NEXT=order[j];break;}}
   try{await runQuestion(order[i],++n);}catch(e){console.error(e);await sleep(1500);}
  }
  $('end').style.display='flex';document.title='END seen='+Object.keys(seen).filter(function(k){return k!=='__intro'}).length+' asked='+n;

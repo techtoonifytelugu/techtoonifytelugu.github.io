@@ -153,3 +153,32 @@ body.phone .badge{min-width:28px;height:28px;font-size:14px}
 body.phone .avatar{width:72px;height:72px}
 body.phone .chitti-tease,body.phone .chitti-ans{font-size:14px}
 body.phone .chitti-state,body.phone .chitti-name{font-size:15px}
+
+/* v7 cinematic + mobile-safe performance: transform/opacity-only animation, no animated blur or filter */
+#stage>.kb{position:absolute;inset:-4%;background:url(img/stadium.jpg) center/cover no-repeat;animation:kb 38s ease-in-out infinite alternate;will-change:transform;z-index:0}
+@keyframes kb{from{transform:scale(1) translate3d(0,0,0)}to{transform:scale(1.09) translate3d(-1.2%,-1%,0)}}
+#stage>.beams{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.beams i{position:absolute;top:-10%;width:34%;height:70%;background:linear-gradient(180deg,rgba(255,244,214,.22),rgba(255,244,214,0) 85%);clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);opacity:.5;will-change:transform,opacity}
+.beams .b1{left:-6%;transform-origin:50% 0;animation:sw1 9s ease-in-out infinite alternate}
+.beams .b2{left:33%;transform-origin:50% 0;animation:sw2 11s ease-in-out infinite alternate}
+.beams .b3{right:-6%;transform-origin:50% 0;animation:sw1 10s ease-in-out infinite alternate-reverse}
+@keyframes sw1{from{transform:rotate(-9deg);opacity:.25}to{transform:rotate(10deg);opacity:.55}}
+@keyframes sw2{from{transform:rotate(8deg);opacity:.5}to{transform:rotate(-8deg);opacity:.2}}
+#stage>.vignette{position:absolute;z-index:1;background:radial-gradient(ellipse 100% 70% at 50% 30%,rgba(0,0,0,0) 35%,rgba(0,0,0,.62) 100%),linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,0) 22%)}
+#stage>.hdr,#stage>.roundblock,#stage>.qcard,#stage>.opts,#stage>.chitti{z-index:2}
+.qcard{box-shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,225,150,.12),inset 0 1px 0 rgba(255,235,180,.2);background:linear-gradient(180deg,rgba(14,18,24,.78),rgba(6,9,13,.70))}
+.opt{background:linear-gradient(90deg,rgba(14,18,24,.74),rgba(8,11,15,.62));transition:opacity .3s,box-shadow .3s,border-color .3s,background-color .3s}
+.opt.correct{transform:none;box-shadow:0 0 22px rgba(126,226,160,.55)}
+.chitti{background:linear-gradient(180deg,rgba(14,18,24,.72),rgba(6,9,13,.62));box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.avatar{box-shadow:0 0 22px rgba(231,194,106,.4),0 8px 20px rgba(0,0,0,.5)}
+.tbar i{will-change:width}
+/* comment-zone lights: drop animated blur+hue-rotate (costly on phones); soft gradients animate by transform only */
+.commentzone div{filter:none;opacity:.7;will-change:transform}
+.rgb1{animation:d1 6s ease-in-out infinite}
+.rgb2{animation:d2 7s ease-in-out infinite}
+.rgb3{animation:d3 5s ease-in-out infinite}
+.rgb1{background:radial-gradient(circle,rgba(255,47,179,.85),transparent 68%)}
+.rgb2{background:radial-gradient(circle,rgba(34,211,238,.85),transparent 68%)}
+.rgb3{background:radial-gradient(circle,rgba(167,139,250,.85),transparent 68%)}
+@media (prefers-reduced-motion:reduce){#stage>.kb,.beams i{animation:none}}
+body.phone .beams i{opacity:.35}
