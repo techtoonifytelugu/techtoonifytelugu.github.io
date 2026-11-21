@@ -1,8 +1,8 @@
-/* Original pre-rendered cricket action. No runtime 3D, no added audio. */
+/* Original silent 2D cricket. The quiz and comment region stay independent. */
 #stage>.hdr,#stage>.roundblock,#stage>.qcard,#stage>.opts,#stage>.chitti{flex-shrink:0}
 .cricket-display{position:relative;z-index:2;flex:1;min-height:0;max-height:400px;margin:18px 0 320px;border-radius:22px;overflow:hidden;background:#0a1c21;box-shadow:0 10px 30px #0006;outline:1px solid #d4b46566}
-.cricket-display video{display:block;width:100%;height:100%;object-fit:cover;object-position:center 58%}
-.cricket-display::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#04101a60,transparent 25%,transparent 76%,#04101a80);box-shadow:inset 0 0 35px #0005}
+.cricket-display canvas{display:block;width:100%;height:100%;object-fit:contain}
+.cricket-display::after{display:none;content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#04101a60,transparent 25%,transparent 76%,#04101a80);box-shadow:inset 0 0 35px #0005}
 .cricket-caption{position:absolute;z-index:1;left:22px;top:14px;font:600 18px 'Baloo 2',sans-serif;letter-spacing:3px;color:#f4e4bd;text-shadow:0 2px 4px #000;display:flex;align-items:center;gap:12px}
 .cricket-caption i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#e5c36f}
 body.phone .cricket-display{max-height:210px;margin:10px 0 165px;border-radius:12px}
