@@ -182,3 +182,9 @@ body.phone .chitti-state,body.phone .chitti-name{font-size:15px}
 .rgb3{background:radial-gradient(circle,rgba(167,139,250,.85),transparent 68%)}
 @media (prefers-reduced-motion:reduce){#stage>.kb,.beams i{animation:none}}
 body.phone .beams i{opacity:.35}
+/* comment-zone lights keep changing colour over time: each blob cross-fades to a second hue via opacity only (no filter) */
+.commentzone div::after{content:"";position:absolute;inset:0;border-radius:50%;opacity:0;animation:cf 8s ease-in-out infinite alternate}
+.rgb1::after{background:radial-gradient(circle,rgba(255,170,40,.85),transparent 68%);animation-duration:7s}
+.rgb2::after{background:radial-gradient(circle,rgba(70,230,110,.85),transparent 68%);animation-duration:9s}
+.rgb3::after{background:radial-gradient(circle,rgba(70,120,255,.85),transparent 68%);animation-duration:11s}
+@keyframes cf{from{opacity:0}to{opacity:1}}
