@@ -1,0 +1,201 @@
+@font-face{font-family:'Noto Sans Telugu';src:url(fonts/NotoSansTelugu-Regular.ttf);font-weight:400}
+@font-face{font-family:'Noto Sans Telugu';src:url(fonts/NotoSansTelugu-Bold.ttf);font-weight:700}
+@font-face{font-family:'Noto Sans Telugu';src:url(fonts/NotoSansTelugu-ExtraBold.ttf);font-weight:800}
+@font-face{font-family:'Ramaraja';src:url(fonts/Ramaraja-Regular.ttf)}
+@font-face{font-family:'Baloo 2';src:url(fonts/Baloo2.ttf);font-weight:400 800}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#05080c}
+#frame{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05080c url(img/stadium.jpg) center/cover no-repeat}
+#stage{width:1080px;height:1920px;position:relative;transform-origin:center center;font-family:'Noto Sans Telugu','Baloo 2',sans-serif;color:#f5ead2;padding:40px 56px 0;display:flex;flex-direction:column;background:#05080c url(img/stadium.jpg) center/cover no-repeat;overflow:hidden;flex:none}
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse 95% 65% at 50% 28%,rgba(0,0,0,.05) 40%,rgba(0,0,0,.55) 100%);pointer-events:none}
+.gold{background:linear-gradient(160deg,#fff3c4 0%,#f3d47c 22%,#d4a017 48%,#f8e08e 70%,#b8860b 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.65))}
+.en{font-family:'Baloo 2',sans-serif}
+.hdr{display:flex;justify-content:space-between;align-items:center;position:relative}
+.brand{font-family:'Ramaraja',serif;font-size:34px}
+.score{display:flex;align-items:center;gap:14px}
+.score-pill{font-size:25px;font-weight:700;color:#ffe9a8;background:rgba(20,14,4,.55);border:1.5px solid rgba(224,184,92,.75);padding:7px 22px;border-radius:999px}
+.dots{display:flex;gap:8px}.dot{width:13px;height:13px;border-radius:50%;background:rgba(255,233,168,.9);box-shadow:0 0 8px rgba(255,215,120,.8)}.dot.off{background:rgba(255,255,255,.18);box-shadow:none}
+.roundblock{text-align:center;margin-top:22px;position:relative}
+.roundblock .pre{font-size:27px;font-weight:700;color:#e8c979;letter-spacing:1px;text-shadow:0 2px 5px rgba(0,0,0,.7)}
+.roundblock .big{font-family:'Ramaraja',serif;font-size:72px;line-height:1.15}
+.qcard{margin-top:20px;position:relative;background:rgba(8,12,16,.66);border:1.5px solid rgba(224,184,92,.55);border-radius:24px;padding:24px 32px 26px;box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,235,180,.15);min-height:250px}
+.qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.tag{font-size:20px;font-weight:800;letter-spacing:1.5px;color:#0d0a03;background:linear-gradient(160deg,#f6dd96,#d4a017);padding:5px 18px;border-radius:999px;font-family:'Baloo 2'}
+.qtimer{font-size:26px;font-weight:700;color:#ffe9a8;font-family:'Baloo 2'}
+.qtext-te{font-size:40px;font-weight:700;line-height:1.45;color:#fdf6e3;text-shadow:0 2px 4px rgba(0,0,0,.6)}
+.tbar{margin-top:18px;height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden}
+.tbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7ee2a0,#f6dd96,#ff8a5c);border-radius:6px}
+.opts{margin-top:18px;display:grid;gap:12px;position:relative}
+.opt{display:flex;align-items:center;gap:18px;background:rgba(10,14,18,.62);border:1.5px solid rgba(224,184,92,.4);border-radius:18px;padding:12px 24px;transition:all .35s}
+.badge{min-width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2';font-size:25px;font-weight:800;color:#141003;background:linear-gradient(160deg,#f6dd96,#caa02f);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.opt .te{font-size:31px;font-weight:700;color:#f3ecd8}.opt .en2{font-size:23px;font-weight:600;color:#c9b98f;margin-left:12px;font-family:'Baloo 2'}
+.opt.correct{border-color:#7ee2a0;background:rgba(20,70,40,.72);box-shadow:0 0 26px rgba(126,226,160,.55);transform:scale(1.025)}
+.opt.correct .badge{background:linear-gradient(160deg,#a9f0c2,#3fae6a)}
+.opt.dim{opacity:.35}
+.chitti{margin-top:18px;display:flex;align-items:center;gap:24px;position:relative;background:rgba(10,14,18,.55);border:1.5px solid rgba(224,184,92,.45);border-radius:24px;padding:14px 24px}
+.avatar{width:230px;height:230px;border-radius:26px;flex:none;overflow:hidden;border:3px solid #e7c26a;box-shadow:0 0 28px rgba(231,194,106,.45);background:#0a1622;animation:bob 2.4s ease-in-out infinite}
+.avatar img{width:100%;height:100%;display:block;object-fit:cover}
+.avatar.pop{animation:pop .6s ease-out}
+.avatar.teasing{animation:none}
+@keyframes tease{0%{transform:rotate(0)}18%{transform:rotate(-9deg) translateY(-6px) scale(1.06)}36%{transform:rotate(8deg) translateY(2px)}54%{transform:rotate(-7deg) translateY(-5px) scale(1.05)}72%{transform:rotate(6deg) translateY(1px)}100%{transform:rotate(0)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1.2deg)}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.12) rotate(-3deg)}100%{transform:scale(1)}}
+.chitti-text{flex:1;min-width:0}
+.chitti-name{font-family:'Ramaraja',serif;font-size:36px}
+.chitti-state{font-size:27px;font-weight:700;color:#a9f0c2;margin-top:2px;min-height:38px}
+.chitti-state.sad{color:#ffb3a0}
+.chitti-tease{font-size:27px;color:#ffe9a8;margin-top:8px;line-height:1.45;text-shadow:0 2px 4px rgba(0,0,0,.65);min-height:78px}
+.chitti-ans{font-size:25px;color:#f3ecd8;margin-top:6px;line-height:1.4;min-height:36px}
+.commentzone{-webkit-mask-image:linear-gradient(transparent,#000 40%);mask-image:linear-gradient(transparent,#000 40%);position:absolute;left:0;right:0;bottom:0;height:38%;overflow:hidden;pointer-events:none}
+.commentzone div{position:absolute;border-radius:50%;filter:blur(70px);opacity:.85}
+.rgb1{width:700px;height:420px;left:-120px;bottom:40px;background:radial-gradient(circle,#ff2fb3,transparent 65%);animation:d1 6s ease-in-out infinite,h 7s linear infinite}
+.rgb2{width:640px;height:420px;right:-140px;bottom:-60px;background:radial-gradient(circle,#22d3ee,transparent 65%);animation:d2 7s ease-in-out infinite,h 9s linear infinite}
+.rgb3{width:520px;height:360px;left:280px;bottom:-120px;background:radial-gradient(circle,#a78bfa,transparent 65%);animation:d3 5s ease-in-out infinite,h 11s linear infinite}
+@keyframes h{to{filter:blur(70px) hue-rotate(360deg)}}
+@keyframes d1{50%{transform:translate(380px,-60px)}}@keyframes d2{50%{transform:translate(-400px,50px)}}@keyframes d3{50%{transform:translate(260px,-90px)}}
+#start,#end{position:absolute;inset:0;background:rgba(3,5,8,.86);display:flex;align-items:center;justify-content:center;text-align:center;z-index:20}
+#end{display:none}.big2{font-family:'Ramaraja',serif;font-size:84px;line-height:1.2}
+#go{margin-top:50px;font:700 40px 'Baloo 2','Noto Sans Telugu';padding:22px 54px;border-radius:999px;border:2px solid #e7c26a;background:linear-gradient(160deg,#f6dd96,#caa02f);color:#141003;cursor:pointer}
+.endsub{font-size:36px;color:#f0d58a;margin-top:30px;line-height:1.5}
+
+.qtext-en{font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:500;line-height:1.3;color:#ffd98a;margin-top:10px;text-shadow:0 2px 4px rgba(0,0,0,.6)}
+
+/* v6 compact fit: everything above 62% (1190px) */
+#stage{padding-top:28px}
+.brand{font-size:30px}
+.roundblock{margin-top:8px}
+.roundblock .pre{font-size:24px}
+.roundblock .big{font-size:54px;line-height:1.1}
+.qcard{margin-top:10px;padding:16px 28px 18px;min-height:0}
+.qmeta{margin-bottom:8px}
+.qtext-te{font-size:38px;line-height:1.38}
+.qtext-en{font-size:30px;margin-top:6px}
+.tbar{margin-top:12px}
+.opts{margin-top:12px;gap:9px}
+.opt{padding:8px 20px}
+.badge{min-width:44px;height:44px;font-size:23px}
+.opt .te{font-size:30px}.opt .en2{font-size:22px}
+.chitti{margin-top:12px;padding:10px 18px;gap:18px;align-items:flex-start}
+.avatar{width:128px;height:128px;border-radius:20px}
+.chitti-name{font-size:28px;display:inline-block;margin-right:14px}
+.chitti-state{display:inline-block;font-size:24px;min-height:0}
+.chitti-tease{font-size:23px;margin-top:2px;line-height:1.35;min-height:0}
+.chitti-ans{font-size:23px;margin-top:2px;min-height:0;line-height:1.3}
+
+/* v6b use headroom for legibility on phones */
+.qtext-te{font-size:44px}
+.qtext-en{font-size:36px}
+.opt{padding:10px 20px}
+.badge{min-width:54px;height:54px;font-size:26px}
+.opt .te{font-size:38px}.opt .en2{font-size:30px;margin-left:12px}
+.avatar{width:150px;height:150px}
+.chitti-name{font-size:30px}.chitti-state{font-size:27px}
+.chitti-tease,.chitti-ans{font-size:27px}
+
+/* v6c margin for longer questions still to come */
+.qtext-te{font-size:42px}.qtext-en{font-size:34px}
+.opt .te{font-size:36px}.opt .en2{font-size:28px}
+.chitti-tease,.chitti-ans{font-size:25px}
+.avatar{width:140px;height:140px}
+
+/* phone layout (portrait, <700px wide): logical stage 540 wide */
+body.phone #stage{padding:16px 22px 0}
+body.phone .brand{font-size:19px}
+body.phone .score-pill{font-size:14px;padding:4px 12px}
+body.phone .dot{width:8px;height:8px}
+body.phone .roundblock{margin-top:4px}
+body.phone .roundblock .pre{font-size:14px}
+body.phone .roundblock .big{font-size:30px}
+body.phone .qcard{margin-top:6px;padding:10px 14px 12px;border-radius:14px}
+body.phone .qmeta{margin-bottom:4px}
+body.phone .tag{font-size:12px;padding:3px 10px}
+body.phone .qtimer{font-size:15px}
+body.phone .qtext-te{font-size:25px;line-height:1.35}
+body.phone .qtext-en{font-size:19px;margin-top:4px}
+body.phone .tbar{margin-top:8px;height:7px}
+body.phone .opts{margin-top:7px;gap:6px}
+body.phone .opt{padding:5px 10px;gap:9px;border-radius:12px}
+body.phone .badge{min-width:30px;height:30px;font-size:15px;border-radius:8px}
+body.phone .opt .te{font-size:22px;display:block}
+body.phone .opt .en2{font-size:16px;margin-left:0;display:block}
+body.phone .chitti{margin-top:7px;padding:7px 10px;gap:10px;border-radius:14px}
+body.phone .avatar{width:84px;height:84px;border-radius:12px;border-width:2px}
+body.phone .chitti-name{font-size:18px;margin-right:8px}
+body.phone .chitti-state{font-size:15px}
+body.phone .chitti-tease,body.phone .chitti-ans{font-size:15px;line-height:1.3}
+body.phone #go{font-size:22px;padding:12px 30px}
+body.phone .big2{font-size:44px}
+body.phone .endsub{font-size:20px}
+/* phone v2: more compact, comments zone 30% */
+body.phone .commentzone{height:30%}
+body.phone .roundblock{display:none}
+body.phone .hdr{margin-bottom:0}
+body.phone .qcard{margin-top:6px}
+body.phone .qtext-te{font-size:21px;line-height:1.3}
+body.phone .qtext-en{font-size:15px;line-height:1.25}
+body.phone .opt{padding:4px 8px;gap:8px}
+body.phone .badge{min-width:26px;height:26px;font-size:13px}
+body.phone .opt .te{font-size:18px;display:inline}
+body.phone .opt .en2{font-size:13px;display:inline;margin-left:6px}
+body.phone .opts{gap:5px;margin-top:6px}
+body.phone .avatar{width:64px;height:64px}
+body.phone .chitti{margin-top:6px;padding:6px 8px}
+body.phone .chitti-name{font-size:15px}
+body.phone .chitti-state{font-size:13px}
+body.phone .chitti-tease,body.phone .chitti-ans{font-size:13px;line-height:1.25}
+/* phone v3: legibility first, comments zone 20% */
+body.phone .commentzone{height:20%}
+body.phone .qtext-te{font-size:23px}
+body.phone .qtext-en{font-size:17px}
+body.phone .opt .te{font-size:20px;display:block}
+body.phone .opt .en2{font-size:15px;display:block;margin-left:0}
+body.phone .badge{min-width:28px;height:28px;font-size:14px}
+body.phone .avatar{width:72px;height:72px}
+body.phone .chitti-tease,body.phone .chitti-ans{font-size:14px}
+body.phone .chitti-state,body.phone .chitti-name{font-size:15px}
+
+/* v7 cinematic + mobile-safe performance: transform/opacity-only animation, no animated blur or filter */
+#stage>.kb{position:absolute;inset:-4%;background:url(img/stadium.jpg) center/cover no-repeat;animation:kb 38s ease-in-out infinite alternate;will-change:transform;z-index:0}
+@keyframes kb{from{transform:scale(1) translate3d(0,0,0)}to{transform:scale(1.09) translate3d(-1.2%,-1%,0)}}
+#stage>.beams{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.beams i{position:absolute;top:-10%;width:34%;height:70%;background:linear-gradient(180deg,rgba(255,244,214,.22),rgba(255,244,214,0) 85%);clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);opacity:.5;will-change:transform,opacity}
+.beams .b1{left:-6%;transform-origin:50% 0;animation:sw1 9s ease-in-out infinite alternate}
+.beams .b2{left:33%;transform-origin:50% 0;animation:sw2 11s ease-in-out infinite alternate}
+.beams .b3{right:-6%;transform-origin:50% 0;animation:sw1 10s ease-in-out infinite alternate-reverse}
+@keyframes sw1{from{transform:rotate(-9deg);opacity:.25}to{transform:rotate(10deg);opacity:.55}}
+@keyframes sw2{from{transform:rotate(8deg);opacity:.5}to{transform:rotate(-8deg);opacity:.2}}
+#stage>.vignette{position:absolute;z-index:1;background:radial-gradient(ellipse 100% 70% at 50% 30%,rgba(0,0,0,0) 35%,rgba(0,0,0,.62) 100%),linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,0) 22%)}
+#stage>.hdr,#stage>.roundblock,#stage>.qcard,#stage>.opts,#stage>.chitti{z-index:2}
+.qcard{box-shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,225,150,.12),inset 0 1px 0 rgba(255,235,180,.2);background:linear-gradient(180deg,rgba(14,18,24,.78),rgba(6,9,13,.70))}
+.opt{background:linear-gradient(90deg,rgba(14,18,24,.74),rgba(8,11,15,.62));transition:opacity .3s,box-shadow .3s,border-color .3s,background-color .3s}
+.opt.correct{transform:none;box-shadow:0 0 22px rgba(126,226,160,.55)}
+.chitti{background:linear-gradient(180deg,rgba(14,18,24,.72),rgba(6,9,13,.62));box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.avatar{box-shadow:0 0 22px rgba(231,194,106,.4),0 8px 20px rgba(0,0,0,.5)}
+.tbar i{will-change:width}
+/* comment-zone lights: drop animated blur+hue-rotate (costly on phones); soft gradients animate by transform only */
+.commentzone div{filter:none;opacity:.7;will-change:transform}
+.rgb1{animation:d1 6s ease-in-out infinite}
+.rgb2{animation:d2 7s ease-in-out infinite}
+.rgb3{animation:d3 5s ease-in-out infinite}
+.rgb1{background:radial-gradient(circle,rgba(255,47,179,.85),transparent 68%)}
+.rgb2{background:radial-gradient(circle,rgba(34,211,238,.85),transparent 68%)}
+.rgb3{background:radial-gradient(circle,rgba(167,139,250,.85),transparent 68%)}
+@media (prefers-reduced-motion:reduce){#stage>.kb,.beams i{animation:none}}
+body.phone .beams i{opacity:.35}
+/* comment-zone lights keep changing colour over time: each blob cross-fades to a second hue via opacity only (no filter) */
+.commentzone div::after{content:"";position:absolute;inset:0;border-radius:50%;opacity:0;animation:cf 8s ease-in-out infinite alternate}
+.rgb1::after{background:radial-gradient(circle,rgba(255,170,40,.85),transparent 68%);animation-duration:7s}
+.rgb2::after{background:radial-gradient(circle,rgba(70,230,110,.85),transparent 68%);animation-duration:9s}
+.rgb3::after{background:radial-gradient(circle,rgba(70,120,255,.85),transparent 68%);animation-duration:11s}
+@keyframes cf{from{opacity:0}to{opacity:1}}
+
+/* Original pre-rendered cricket action. No runtime 3D, no added audio. */
+#stage>.hdr,#stage>.roundblock,#stage>.qcard,#stage>.opts,#stage>.chitti{flex-shrink:0}
+.cricket-display{position:relative;z-index:2;flex:1;min-height:0;max-height:400px;margin:18px 0 320px;border-radius:22px;overflow:hidden;background:#0a1c21;box-shadow:0 10px 30px #0006;outline:1px solid #d4b46566}
+.cricket-display video{display:block;width:100%;height:100%;object-fit:cover;object-position:center 58%}
+.cricket-display::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#04101a60,transparent 25%,transparent 76%,#04101a80);box-shadow:inset 0 0 35px #0005}
+.cricket-caption{position:absolute;z-index:1;left:22px;top:14px;font:600 18px 'Baloo 2',sans-serif;letter-spacing:3px;color:#f4e4bd;text-shadow:0 2px 4px #000;display:flex;align-items:center;gap:12px}
+.cricket-caption i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#e5c36f}
+body.phone .cricket-display{max-height:210px;margin:10px 0 165px;border-radius:12px}
+body.phone .cricket-caption{font-size:10px;letter-spacing:1.7px;left:12px;top:8px;gap:7px}
+body.phone .cricket-caption i{width:4px;height:4px}
