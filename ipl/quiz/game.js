@@ -51,15 +51,17 @@ var TEASE=[
  'టైమ్ అయిపోతోంది, త్వరగా త్వరగా!',
  'హ్మ్... ఈ ఆప్షన్ మీద నాకు డౌట్ వస్తోంది!',
  'క్రికెట్ ఫ్యాన్స్ అంటే ఇలాంటివి ఈజీగా చెప్పేయాలి కదా!',
- 'ఎవరు ముందు కరెక్ట్ చెబుతారో చూద్దాం!',
- 'నా అంచనా నేను దాచుకున్నాను, చివరిలో చెబుతాను!'];
+ 'ఎవరు ముందు కరెక్ట్ చెబుతారో చూద్దాం!'];
 var HAPPY=['మిని నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిని కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
 var SAD=['అయ్యో! ఈ సారి మిని తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
 var TAGS={E:'EASY',M:'MEDIUM',H:'HARD'};
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
-function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/sad.png';var av=f.parentNode;av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
+function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/sad.png';var av=f.parentNode;av.classList.remove('teasing');av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
+/* playful mocking waggle every tease (~5s during the timer); never swaps the face, so it can't hint the result */
+function teaseFace(){var av=$('face').parentNode;av.classList.remove('teasing');void av.offsetWidth;av.classList.add('teasing');ev('tease-face');}
+$('face').parentNode.addEventListener('animationend',function(e){if(e.animationName==='tease')this.classList.remove('teasing');});
 var D=null,order=[],score=0,asked=0,running=false;
 function buildOrder(){var rank={E:0,M:1,H:2};var g={E:[],M:[],H:[]};
  D.questions.forEach(function(q){if(P.get('only')&&q.id!==P.get('only'))return;if(!seen[q.id])g[q.tier].push(q)});
@@ -81,6 +83,7 @@ function renderQ(q,n){
 function miniGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
 async function timerPhase(q,guess){
  var start=Date.now(),total=TIMER_MS/FAST,lastTick=-1,nextTease=1800/FAST,ti=0;
+ var guessAt=8000/FAST,guessed=false;
  $('tbar').style.transition='width '+(total/1000)+'s linear';$('tbar').style.width='100%';
  var teases=shuffle(TEASE.slice());
  while(true){
@@ -88,8 +91,12 @@ async function timerPhase(q,guess){
   if(P.get('hold')==='timer'&&el>5000){$('ctease').textContent=TEASE[0];await new Promise(function(){});}
   var left=Math.ceil((total-el)*FAST/1000);$('timer').textContent='⏱ 00:'+(left<10?'0':'')+left;
   if(left<=5&&left!==lastTick){lastTick=left;sfx('tick');}
-  if(el>=nextTease&&total-el>1500/FAST){nextTease+=TEASE_EVERY/FAST;$('ctease').textContent=teases[ti++%teases.length];sfx('pop');ev('tease');
+  if(el>=nextTease&&total-el>1500/FAST){nextTease+=TEASE_EVERY/FAST;$('ctease').textContent=teases[ti++%teases.length];sfx('pop');teaseFace();ev('tease');
     $('cstate').textContent='';}
+  /* Mini announces her guess mid-timer; it is her pick (can be wrong), not the answer, and the result reveal still waits for the answer voice */
+  if(!guessed&&el>=guessAt){guessed=true;
+    $('cans').innerHTML='';var gb=document.createElement('b');gb.textContent='మిని అంచనా: '+'ABCD'[guess]+'!';$('cans').appendChild(gb);
+    sfx('pop');teaseFace();ev('guess');}
   await new Promise(function(r){setTimeout(r,100)});
  }
  $('timer').textContent='⏱ 00:00';

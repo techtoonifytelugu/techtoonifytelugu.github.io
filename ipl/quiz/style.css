@@ -36,6 +36,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05080c}
 .avatar{width:230px;height:230px;border-radius:26px;flex:none;overflow:hidden;border:3px solid #e7c26a;box-shadow:0 0 28px rgba(231,194,106,.45);background:#0a1622;animation:bob 2.4s ease-in-out infinite}
 .avatar img{width:100%;height:100%;display:block;object-fit:cover}
 .avatar.pop{animation:pop .6s ease-out}
+.avatar.teasing{animation:tease .9s ease-in-out}
+@keyframes tease{0%{transform:rotate(0)}18%{transform:rotate(-9deg) translateY(-6px) scale(1.06)}36%{transform:rotate(8deg) translateY(2px)}54%{transform:rotate(-7deg) translateY(-5px) scale(1.05)}72%{transform:rotate(6deg) translateY(1px)}100%{transform:rotate(0)}}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1.2deg)}}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.12) rotate(-3deg)}100%{transform:scale(1)}}
 .chitti-text{flex:1;min-width:0}
