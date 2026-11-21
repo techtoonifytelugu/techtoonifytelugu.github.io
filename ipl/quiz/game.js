@@ -38,18 +38,18 @@ function playClip(a,maxMs,durMs){return new Promise(function(res){
   if(p&&p.catch)p.catch(function(err){if(done)return;clearTimeout(tm);done=true;if(err&&err.name==='NotAllowedError'&&tries++<3){waitUnblocked().then(function(){attempt()});}else res(false);});}
  attempt();});}
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms/FAST)})}
-/* ---- Minne content (text only; no voice for teases) ---- */
+/* ---- Minni content (text only; no voice for teases) ---- */
 var TEASE=[
  'ఏమిటి అందరూ ఇంకా ఆలోచిస్తున్నారా? ఇది మీకు తెలిసే ఉంటుంది!',
  'కామెంట్స్‌లో మీ సమాధానం రాయండి, నేను చూస్తున్నాను!',
- 'మిన్నే సమాధానం చెప్పేస్తే మజా ఉండదు, మీరు చెప్పండి!',
+ 'మిన్ని సమాధానం చెప్పేస్తే మజా ఉండదు, మీరు చెప్పండి!',
  'టైమ్ అయిపోతోంది, త్వరగా త్వరగా!',
  'హ్మ్... ఈ ఆప్షన్ మీద నాకు డౌట్ వస్తోంది!',
  'క్రికెట్ ఫ్యాన్స్ అంటే ఇలాంటివి ఈజీగా చెప్పేయాలి కదా!',
  'ఎవరు ముందు కరెక్ట్ చెబుతారో చూద్దాం!',
  'నా అంచనా నేను దాచుకున్నాను, చివరిలో చెబుతాను!'];
-var HAPPY=['మిన్నే నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిన్నే కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
-var SAD=['అయ్యో! ఈ సారి మిన్నే తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
+var HAPPY=['మిన్ని నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిన్ని కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
+var SAD=['అయ్యో! ఈ సారి మిన్ని తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
 var TAGS={E:'EASY',M:'MEDIUM',H:'HARD'};
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
@@ -73,7 +73,7 @@ function renderQ(q,n){
  setFace(true);$('cstate').textContent='';$('cstate').className='chitti-state';$('ctease').textContent='';$('cans').textContent='';
  var ds=$('dots');ds.innerHTML='';for(var i=0;i<5;i++){var e=document.createElement('div');e.className='dot'+(i<(n-1)%5+1?'':' off');ds.appendChild(e);}
 }
-function minneGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
+function minniGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
 async function timerPhase(q,guess){
  var start=Date.now(),total=TIMER_MS/FAST,lastTick=-1,nextTease=1800/FAST,ti=0;
  $('tbar').style.transition='width '+(total/1000)+'s linear';$('tbar').style.width='100%';
@@ -94,16 +94,16 @@ async function runQuestion(q,n){
  renderQ(q,n);sfx('whoosh');
  await sleep(500);
  await playClip(qa,q.qd+8000,q.qd);
- var guess=minneGuess(q);
+ var guess=minniGuess(q);
  await timerPhase(q,guess);
  /* reveal */
  for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
  var ok=guess===q.c;score+=ok?1:0;
- $('score').textContent='మిన్నే స్కోరు '+score+' / '+n;
+ $('score').textContent='మిన్ని స్కోరు '+score+' / '+n;
  setFace(ok);sfx(ok?'ding':'sad');
  $('cstate').textContent=pick(ok?HAPPY:SAD);$('cstate').className='chitti-state'+(ok?'':' sad');
  $('ctease').textContent=q.why;
- $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిన్నే అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
+ $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిన్ని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
  if(P.get('hold')==='reveal'){await new Promise(function(){});}
  await sleep(350);
  await playClip(aa,q.ad+8000,q.ad);
@@ -134,7 +134,7 @@ async function sweep(){
  D.questions.forEach(function(q,k){
   renderQ(q,k+1);
   for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
-  $('cstate').textContent=wh;$('ctease').textContent=q.why;$('cans').innerHTML='<b>మిన్నే అంచనా: D. '+q.ote[3]+'</b>';
+  $('cstate').textContent=wh;$('ctease').textContent=q.why;$('cans').innerHTML='<b>మిన్ని అంచనా: D. '+q.ote[3]+'</b>';
   var st=$('stage').getBoundingClientRect(),H=$('stage').offsetHeight,sc=st.height/H,c=$('chitti').getBoundingClientRect();
   var oo=$('opts').getBoundingClientRect(),w=0;document.querySelectorAll('.opt').forEach(function(e){w=Math.max(w,e.scrollWidth-e.clientWidth)});
   res.push({id:q.id,H:H,chittiBottom:Math.round((c.bottom-st.top)/sc),ratio:+(((c.bottom-st.top)/sc)/H).toFixed(3),optsBottom:Math.round((oo.bottom-st.top)/sc),overflowX:w});
