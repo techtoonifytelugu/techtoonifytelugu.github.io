@@ -12,7 +12,7 @@ const ease=(a,b,t)=>{let u=clamp((t-a)/(b-a));return u*u*(3-2*u);};
 const pt=(x,y)=>({x,y}); const lerp=(a,b,u)=>pt(mix(a.x,b.x,u),mix(a.y,b.y,u));
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 // Procedural team kits: 12 hues x 6 patterns x 3 trims x 4 depths, so pairings do not repeat.
-const HUES=[['CRIMSON',348],['EMBER',16],['AMBER',36],['GOLD',48],['LIME',86],['JADE',152],['TEAL',178],['AZURE',200],['ROYAL',222],['VIOLET',266],['MAGENTA',310],['ROSE',328]];
+const HUES=[['CRIMSON',348],['EMBER',16],['AMBER',36],['GOLD',48],['LIME',86],['JADE',152],['TEAL',178],['AZURE',200],['ROYAL',222],['VIOLET',266],['MAGENTA',310],['ROSE',328],['ORANGE',26],['SKY',192],['INDIGO',244],['MINT',140],['WINE',338],['COBALT',210]];
 const PATTERNS=['solid','stripes','hoops','sash','gradient','panel'];
 const TRIMS=['#f7f3df','#ffd54d','#13222a'];
 const hsl=(h,s,l)=>`hsl(${h} ${s}% ${l}%)`;
@@ -29,7 +29,9 @@ let sigHist=new Set(),kitHist=new Set(),fieldSpots=[],crowdSeed=1,lightMode=0;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
 function shuffle(a){for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function take(type){let a=type==='ball'?bag:shotBag;if(!a.length)a.push(...shuffle(type==='ball'?deliveries.map((_,i)=>i):strokes.map((_,i)=>i)));return a.pop();}
-function changeKits(){let tries=0;while(tries++<40){let r=Math.random,a=makeKit(r),b=makeKit(r);if(a.sig.split('-')[0]===b.sig.split('-')[0])continue;let sig=a.sig+'>'+b.sig;if(kitHist.has(sig))continue;kitHist.add(sig);batKit=a;bowlKit=b;return;}kitHist.clear();batKit=makeKit(Math.random);bowlKit=makeKit(Math.random);}
+function changeKits(){let oldBat=batKit?batKit.sig.split('-')[0]:'-',oldBowl=bowlKit?bowlKit.sig.split('-')[0]:'-';let tries=0;while(tries++<60){let r=Math.random,a=makeKit(r),b=makeKit(r);let ah=a.sig.split('-')[0],bh=b.sig.split('-')[0];if(ah===bh||ah===oldBat||bh===oldBowl)continue;let sig=a.sig+'>'+b.sig;if(kitHist.has(sig))continue;kitHist.add(sig);batKit=a;bowlKit=b;saveHist();return;}kitHist.clear();batKit=makeKit(Math.random);bowlKit=makeKit(Math.random);saveHist();}
+function saveHist(){try{localStorage.setItem('iplquiz.cricket.v1',JSON.stringify({s:[...sigHist].slice(-6000),k:[...kitHist].slice(-1000)}));}catch(e){}}
+function loadHist(){try{let d=JSON.parse(localStorage.getItem('iplquiz.cricket.v1'));if(d){(d.s||[]).forEach(x=>sigHist.add(x));(d.k||[]).forEach(x=>kitHist.add(x));}}catch(e){}}
 function newField(){let r=mulberry32(Math.floor(Math.random()*1e9));let pool=[[848,208],[126,218],[700,178],[310,186],[560,252],[205,252],[820,252],[425,168],[640,150],[260,150]];fieldSpots=shuffle(pool.slice()).slice(0,3).map(s=>pt(s[0]+(r()*36-18),s[1]+(r()*22-11)));crowdSeed=Math.floor(r()*1e9);lightMode=Math.floor(r()*3);}
 function makePlay(di,si,bh,boh,seed,forceOutcome){let rng=mulberry32(seed);let d=deliveries[di];let outcome;
  if(forceOutcome)outcome=forceOutcome;
@@ -53,7 +55,7 @@ function makePlay(di,si,bh,boh,seed,forceOutcome){let rng=mulberry32(seed);let d
  return {delivery:di,shot:si,batHand:bh,bowlHand:boh,outcome,speed,px,py,swing,rise,dirJ,six,landing,mf,skin,number,seed,sig};}
 function next(){if(ballNo===6){over++;ballNo=0;changeKits();newField();}
  let p,tries=0;do{p=makePlay(take('ball'),take('shot'),Math.random()<.5?'L':'R',Math.random()<.5?'L':'R',Math.floor(Math.random()*1e9));tries++;}while(sigHist.has(p.sig)&&tries<14);
- sigHist.add(p.sig);play=p;ballNo++;log.push({...play,over:over+1,ball:ballNo,batKit:batKit.name,bowlKit:bowlKit.name});if(log.length>60)log.shift();}
+ sigHist.add(p.sig);if(ballNo===0)saveHist();play=p;ballNo++;log.push({...play,over:over+1,ball:ballNo,batKit:batKit.name,bowlKit:bowlKit.name});if(log.length>60)log.shift();}
 function line(points,color,width){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}
 function poly(points,color){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=color;ctx.fill();}
 function ellipse(x,y,rx,ry,c){ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();}
@@ -189,7 +191,7 @@ function render(t,p=play){ctx.drawImage(bg,0,0);ctx.save();if(p.batHand==='L'){c
 function playable(){return !document.hidden&&!reduce.matches&&document.getElementById('start').style.display==='none'&&document.getElementById('end').style.display!=='flex';}
 function frame(now){raf=0;if(manual||!playable()){last=0;return;}if(last)elapsed+=Math.min((now-last)/1000,.1);last=now;if(elapsed>=DURATION){elapsed-=DURATION;next();}render(elapsed);raf=requestAnimationFrame(frame);}
 function update(){if(playable()&&!manual){if(!raf){last=0;raf=requestAnimationFrame(frame);}}else{if(raf)cancelAnimationFrame(raf);raf=0;last=0;}}
-changeKits();newField();next();rebuildBG();render(0);
+loadHist();changeKits();newField();next();rebuildBG();render(0);
 // Rebuild the stadium backdrop whenever a new over brings fresh lighting.
 document.getElementById('go').addEventListener('click',update);document.addEventListener('visibilitychange',update);reduce.addEventListener('change',update);let watch=new MutationObserver(update);['start','end'].forEach(id=>watch.observe(document.getElementById(id),{attributes:true,attributeFilter:['style']}));
 if(new URLSearchParams(location.search).get('debug')==='1')window.cricket2D={inspect:()=>({elapsed,over:over+1,ball:ballNo,batKit:batKit.name,bowlKit:bowlKit.name,lightMode,play:{...play},log:log.slice(),running:!!raf,reduced:reduce.matches,sigCount:sigHist.size,kitCount:kitHist.size}),
