@@ -31,12 +31,15 @@ var voice=new Audio();voice.preload='auto';
 function loadClip(name){var a=new Audio();a.preload='auto';a.src='clips/'+name+'.mp3';return a;}
 var blockedWait=null;
 function waitUnblocked(){if(blockedWait)return blockedWait;$('start').style.display='flex';blockedWait=new Promise(function(r){window.__resume=function(){blockedWait=null;$('start').style.display='none';r();};});return blockedWait;}
-function playClip(a,maxMs,durMs){return new Promise(function(res){
- if(SIM){setTimeout(function(){res(true)},(durMs||3000)/FAST);return;}
- var tries=0;function attempt(){var done=false,tm;function fin(ok){if(done)return;done=true;clearTimeout(tm);a.onended=a.onerror=null;res(ok);}
-  a.onended=function(){fin(true)};a.onerror=function(){fin(false)};
+function playClip(a,maxMs,durMs,onstart){return new Promise(function(res){
+ if(SIM){if(onstart)onstart();setTimeout(function(){res(true)},(durMs||3000)/FAST);return;}
+ var tries=0;function attempt(){var done=false,tm,started=false;
+  function start(){if(started)return;started=true;if(onstart)onstart();}
+  function fin(ok){if(done)return;done=true;clearTimeout(tm);a.onended=a.onerror=a.onplaying=null;res(ok);}
+  a.onended=function(){fin(true)};a.onerror=function(){fin(false)};a.onplaying=start;
   tm=setTimeout(function(){fin(false)},maxMs||40000);
   a.currentTime=0;var p=a.play();
+  if(p&&p.then)p.then(start);
   if(p&&p.catch)p.catch(function(err){if(done)return;clearTimeout(tm);done=true;if(err&&err.name==='NotAllowedError'&&tries++<3){waitUnblocked().then(function(){attempt()});}else res(false);});}
  attempt();});}
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms/FAST)})}
@@ -98,20 +101,23 @@ async function runQuestion(q,n){
  await playClip(qa,q.qd+8000,q.qd);
  var guess=miniGuess(q);
  await timerPhase(q,guess);
- /* reveal: the answer voice and the visual reaction fire together, so the expression never lands before the answer */
- var ok=guess===q.c;score+=ok?1:0;
+ /* reveal: every result-revealing change (score, highlight, expression, guess) fires only when the answer audio actually starts playing; the fallback runs only if the clip itself failed, so the expression can never precede the voice */
+ var ok=guess===q.c;
  await sleep(350);
- ev('answer-voice-start');
- var played=playClip(aa,q.ad+8000,q.ad);
- for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
- $('score').textContent='మిని స్కోరు '+score+' / '+n;
- setFace(ok);sfx(ok?'ding':'sad');
- $('cstate').textContent=pick(ok?HAPPY:SAD);$('cstate').className='chitti-state'+(ok?'':' sad');
- $('ctease').textContent=q.why;
- $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
- ev('reveal-ui');
+ ev('answer-play-invoked');
+ var revealed=false;
+ function reveal(src){if(revealed)return;revealed=true;ev(src);
+  score+=ok?1:0;
+  for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
+  $('score').textContent='మిని స్కోరు '+score+' / '+n;
+  setFace(ok);sfx(ok?'ding':'sad');
+  $('cstate').textContent=pick(ok?HAPPY:SAD);$('cstate').className='chitti-state'+(ok?'':' sad');
+  $('ctease').textContent=q.why;
+  $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
+  ev('reveal-ui');}
+ var played=playClip(aa,q.ad+8000,q.ad,function(){reveal('answer-playing');});
  if(P.get('hold')==='reveal'){await new Promise(function(){});}
- await played;ev('answer-voice-end');
+ await played;reveal('reveal-fallback');ev('answer-voice-end');
  seen[q.id]=1;saveSeen();
  await sleep(GAP_MS);
 }
