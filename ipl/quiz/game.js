@@ -139,7 +139,7 @@ async function main(){
  }
  $('end').style.display='flex';document.title='END seen='+Object.keys(seen).filter(function(k){return k!=='__intro'}).length+' asked='+n;
 }
-function begin(){$('start').style.display='none';ac();if(window.__resume)window.__resume();if(!running)main();}
+function begin(){$('start').style.display='none';try{ac()}catch(e){}try{var pr=new Audio('clips/0001-q.mp3');pr.volume=0;var pp=pr.play();if(pp&&pp.then)pp.then(function(){pr.pause()});if(pp&&pp.catch)pp.catch(function(){})}catch(e){}if(window.__resume)window.__resume();if(!running)main();}
 $('go').onclick=begin;
 if(AUTO){ // OBS / kiosk: try to start right away; fall back to the start button if audio is blocked
  try{ac();if(AC.state==='running'){begin();}}catch(e){}
