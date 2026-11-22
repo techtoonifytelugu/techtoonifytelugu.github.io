@@ -1,12 +1,14 @@
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)};
-var TIMER_MS=12000, GAP_MS=1400, TEASE_EVERY=5000;
+var TIMER_MS=12000, TIMER_TIER={E:20000,M:25000,H:30000}, GAP_MS=1400, TEASE_EVERY=5000; /* per-tier thinking time: easy 20s, medium 25s, hard 30s (user-approved pace) */
 var P=new URLSearchParams(location.search);
 var SIM=P.get('sim')==='1',AUTO=P.get('auto')==='1', FAST=parseFloat(P.get('speed')||'1');
+var DAY=parseInt(P.get('day')||'0',10)||0; /* 0 = day picker; 1-3 = that day's unseen questions only */
 var DBG=P.get('debug')==='1',EV=[],T0=Date.now();
 function ev(k){if(DBG){var fs=$('face').src;EV.push({t:Date.now()-T0,ev:k,face:fs.indexOf('sad')>=0?'sad':fs.indexOf('tease')>=0?'tease':'smile'});}}
-var KEY='iplquiz.seen.v5';
+/* 3-day programme progress lives under its own key: the old iplquiz.seen.v5 test history is left untouched in storage, and the programme starts with every question fresh (prior exposure was private tests only). Within the programme a question once shown never reappears on any day. */
+var KEY='iplquiz.days.v1';
 var seen={};try{seen=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
 if(P.get('reset')==='1'){seen={};try{localStorage.removeItem(KEY)}catch(e){}}
 function saveSeen(){try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');for(var k in o)seen[k]=1;}catch(e){}try{localStorage.setItem(KEY,JSON.stringify(seen))}catch(e){}}
@@ -57,6 +59,7 @@ var TEASE=[
 var HAPPY=['మిని నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిని కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
 var SAD=['అయ్యో! ఈ సారి మిని తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
 var TAGS={E:'EASY',M:'MEDIUM',H:'HARD'};
+var ENDTXT={0:['ఈ రౌండ్ ముగిసింది!','చూసినందుకు ధన్యవాదాలు. త్వరలో మళ్ళీ కలుద్దాం!'],1:['దినం 1 ముగిసింది!','రేపు దినం 2తో కలుద్దాం! జై ఐపీఎల్!'],2:['దినం 2 ముగిసింది!','రేపు చివరి రోజు. దినం 3తో కలుద్దాం!'],3:['దినం 3 ముగిసింది!','మూడు రోజుల ఐపీఎల్ క్విజ్ పూర్తయింది. చూసినందుకు ధన్యవాదాలు!']};
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
@@ -70,7 +73,7 @@ function teaseFace(){var f=$('face'),av=f.parentNode;av.classList.remove('teasin
 $('face').parentNode.addEventListener('animationend',function(e){if(e.animationName==='tease')this.classList.remove('teasing');});
 var D=null,order=[],score=0,asked=0,running=false;
 function buildOrder(){var rank={E:0,M:1,H:2};var g={E:[],M:[],H:[]};
- D.questions.forEach(function(q){if(P.get('only')&&q.id!==P.get('only'))return;if(!seen[q.id])g[q.tier].push(q)});
+ D.questions.forEach(function(q){if(P.get('only')&&q.id!==P.get('only'))return;if(DAY&&(q.day||1)!==DAY)return;if(!seen[q.id])g[q.tier].push(q)});
  /* easy -> medium -> hard, shuffled within a band; bands blend so it never feels like a wall */
  var all=[].concat(shuffle(g.E),shuffle(g.M),shuffle(g.H));
  var keyed=all.map(function(q,i){return {q:q,k:i+Math.random()*all.length*0.25}});
@@ -88,7 +91,7 @@ function renderQ(q,n){
 }
 function miniGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
 async function timerPhase(q,guess){
- var start=Date.now(),total=TIMER_MS/FAST,lastTick=-1,nextTease=1800/FAST,ti=0;
+ var start=Date.now(),total=(TIMER_TIER[q.tier]||TIMER_MS)/FAST,lastTick=-1,nextTease=1800/FAST,ti=0;
  var guessAt=8000/FAST,guessed=false;
  $('tbar').style.transition='width '+(total/1000)+'s linear';$('tbar').style.width='100%';
  var teases=shuffle(TEASE.slice());
@@ -136,24 +139,42 @@ async function runQuestion(q,n){
  await played;reveal('reveal-fallback');ev('answer-voice-end');
  await sleep(GAP_MS);
 }
+var DATA_PROMISE=null;
+function loadData(){if(!DATA_PROMISE){DATA_PROMISE=(async function(){for(;;){try{D=await (await fetch('data.json?'+Date.now())).json();return D}catch(e){await sleep(5000)}}})();}return DATA_PROMISE;}
+function fmtDur(ms){var h=ms/3600000;return h>=1?(Math.round(h*10)/10)+' గంటలు':Math.max(1,Math.round(ms/60000))+' నిమిషాలు';}
+function dayStats(d){var tot=0,un=0,ms=0;D.questions.forEach(function(q){if((q.day||1)!==d)return;tot++;if(!seen[q.id]){un++;ms+=(q.qd||13000)+(q.ad||9000)+2250+(TIMER_TIER[q.tier]||TIMER_MS);}});return{total:tot,unseen:un,ms:ms};}
+function buildPicker(){var box=$('daybtns');if(!box)return;box.innerHTML='';
+ [1,2,3].forEach(function(d){var st=dayStats(d),b=document.createElement('button');b.className='daybtn';
+  if(!st.unseen){b.disabled=true;b.innerHTML='<b>దినం '+d+'</b><span>పూర్తయింది ✓</span>';}
+  else{b.innerHTML='<b>దినం '+d+'</b><span>'+st.unseen+' ప్రశ్నలు · సుమారు '+fmtDur(st.ms)+'</span>';b.onclick=function(){DAY=d;begin();};}
+  box.appendChild(b);});}
+function setupStart(){loadData().then(function(){syncSeen();
+ if(DAY){var go=$('go');go.style.display='';go.textContent='▶ దినం '+DAY+' ప్రారంభించండి / Start Day '+DAY;var ds=$('daysub');if(ds)ds.style.display='none';}
+ else buildPicker();});}
 async function main(){
  running=true;
- try{D=await (await fetch('data.json?'+Date.now())).json();}catch(e){setTimeout(main,5000);return;}
+ D=await loadData();
+ if(DAY)$('roundname').textContent='ఐపీఎల్ క్విజ్ · దినం '+DAY;
  order=buildOrder();
  if(D.intro&&!seen.__intro){var ia=loadClip('intro');$('qte').textContent='ఐపీఎల్ క్విజ్ షోకి స్వాగతం!';$('qen').textContent='Welcome to the IPL Quiz Show!';$('opts').innerHTML='';await playClip(ia,D.intro.d+6000,D.intro.d);seen.__intro=1;saveSeen();}
- var n=Object.keys(seen).filter(function(k){return k!=='__intro'}).length;
+ var n=D.questions.filter(function(q){return (!DAY||(q.day||1)===DAY)&&seen[q.id]}).length;
  for(var i=0;i<order.length;i++){
   syncSeen();if(seen[order[i].id])continue;
   NEXT=null;for(var j=i+1;j<order.length;j++){if(!seen[order[j].id]){NEXT=order[j];break;}}
   try{await runQuestion(order[i],++n);}catch(e){console.error(e);await sleep(1500);}
  }
- $('end').style.display='flex';document.title='END seen='+Object.keys(seen).filter(function(k){return k!=='__intro'}).length+' asked='+n;
+ var et=ENDTXT[DAY]||ENDTXT[0],eb=$('end');eb.querySelector('.big2').textContent=et[0];eb.querySelector('.endsub').textContent=et[1];eb.style.display='flex';document.title='END day='+DAY+' asked='+n;
 }
 function begin(){$('start').style.display='none';try{ac()}catch(e){}try{var pr=new Audio('clips/0001-q.mp3');pr.volume=0;var pp=pr.play();if(pp&&pp.then)pp.then(function(){pr.pause()});if(pp&&pp.catch)pp.catch(function(){})}catch(e){}if(window.__resume)window.__resume();if(!running)main();}
 $('go').onclick=begin;
-if(AUTO){ // OBS / kiosk: try to start right away; fall back to the start button if audio is blocked
- try{ac();if(AC.state==='running'){begin();}}catch(e){}
- var probe=new Audio('clips/0001-q.mp3');probe.volume=0;probe.play().then(function(){probe.pause();begin();}).catch(function(){});
+if(!AUTO)setupStart();
+if(AUTO){ // OBS / kiosk: pick the earliest day with fresh questions, then try to start right away; fall back to the start button if audio is blocked
+ loadData().then(function(){syncSeen();
+  if(!DAY){for(var d=1;d<=3;d++){if(dayStats(d).unseen>0){DAY=d;break;}}
+   if(!DAY){var et=ENDTXT[3],eb=$('end');eb.querySelector('.big2').textContent=et[0];eb.querySelector('.endsub').textContent=et[1];eb.style.display='flex';$('start').style.display='none';return;}}
+  try{ac();if(AC.state==='running'){begin();}}catch(e){}
+  var probe=new Audio('clips/0001-q.mp3');probe.volume=0;probe.play().then(function(){probe.pause();begin();}).catch(function(){});
+ });
 }
 
 async function sweep(){
