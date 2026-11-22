@@ -151,16 +151,10 @@ function ballPosition(t,p){let d=deliveries[p.delivery],rel=bowlerState(RELEASE,
   if(r===4){if(u>2.05)return null;let v=clamp(u/1.8),q=lerp(end,p.dirJ,v);q.y-=Math.abs(Math.sin(v*Math.PI*3))*13*(1-v);return q;}
   let dest=pt(p.mf.x,p.mf.y+8);if(u>1.35)return null;let v=clamp(u/1.2),q=lerp(end,dest,v);q.y-=Math.abs(Math.sin(v*Math.PI*2))*9*(1-v);return q;}
  return null;}
-function camAt(t,p){let c; // cut-based coverage: bowler closeup, batsman closeup, contact punch, wide for the flight
- if(t<RELEASE){let u=ease(0,RELEASE,t);c={cx:mix(760,600,u),cy:mix(248,262,u),z:mix(1.22,1.1,u)};}
- else if(t<CONTACT){let u=ease(RELEASE,CONTACT,t);c={cx:mix(600,330,u),cy:mix(262,258,u),z:mix(1.1,1.18,u)};}
- else{let u=t-CONTACT,punch=1.18+ease(0,.3,u)*.12,out=ease(.5,1.5,u);
-  c={cx:mix(315,480,out),cy:mix(258,235,out),z:mix(punch,1,out)};}
- if(t>5.55){let u=ease(5.55,6.7,t);c.cx=mix(c.cx,480,u);c.cy=mix(c.cy,235,u);c.z=mix(c.z,1,u);}
- let big=p.outcome.type==='bowled'||p.outcome.type==='edge'||p.outcome.type==='catch'||(p.outcome.type==='runs'&&p.outcome.runs===6);
- let imp=big&&t>CONTACT?Math.max(0,1-(t-CONTACT)*1.7):0;
- if(imp>0){c.cx+=Math.sin(t*63)*4*imp;c.cy+=Math.cos(t*71)*3*imp;}
- return c;}
+function camAt(t,p){ // fixed broadcast frame: no cuts, pans, zooms or shake. The pitch and
+ // stadium stay still; only the players and the ball move. Identity transform, so the
+ // action layer lines up exactly with the painted pitch and creases.
+ return {cx:480,cy:200,z:1};}
 function trail(t,p){let pts=[];for(let k=8;k>0;k--){let q=ballPosition(t-k*.035,p);if(q)pts.push(q);}return pts;}
 function crowdJump(t,p,on){if(!on)return;let r=mulberry32(crowdSeed+7);let j=Math.sin((t-4.6)*9)*3;
  for(let i=0;i<16;i++){let x=30+r()*900,y=74+Math.floor(r()*4)*15;ellipse(x,y-Math.abs(j)*(1+r()),2.4,2.6,['#ffd54d','#f4e4bd','#ff9e7d'][Math.floor(r()*3)]);}}
