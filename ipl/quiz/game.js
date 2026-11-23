@@ -66,7 +66,7 @@ var ENDTXT={0:['ఈ రౌండ్ ముగిసింది!','చూసి�
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
-function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/laugh.png';var av=f.parentNode;av.classList.remove('teasing');av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
+function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/14-laugh.png';var av=f.parentNode;av.classList.remove('teasing');av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
 /* playful mocking waggle every tease (~5s during the timer); never swaps the face, so it can't hint the result */
 var teaseT=null;(new Image()).src='img/tease.png';
 function teaseFace(){var f=$('face'),av=f.parentNode;av.classList.remove('teasing');void av.offsetWidth;av.classList.add('teasing');
@@ -124,7 +124,7 @@ async function runQuestion(q,n){
  await playClip(qa,q.qd+8000,q.qd);
  var guess=miniGuess(q);
  var ok=guess===q.c;
- var ra=loadClip(ok?'react-correct':'react-wrong'); /* preloads during the thinking timer */
+ var ra=loadClip(ok?'10-react-correct':'11-react-wrong'); /* preloads during the thinking timer */
  prefetch(NEXT);
  await timerPhase(q,guess);
  /* reveal split (user request 2026-11-23): on a wrong guess the laugh/retry verdict plays FIRST, then the answer narration for viewers. Verdict UI (face, Mini's line, score) fires with whichever voice carries the verdict; the correct-answer highlight and reason still fire only when the answer audio actually starts, so the answer is never revealed early. Fallbacks run only if a clip itself failed. */
