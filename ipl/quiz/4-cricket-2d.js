@@ -7,6 +7,10 @@
 const canvas=document.getElementById('cricket-action'); if(!canvas)return;
 const ctx=canvas.getContext('2d',{alpha:false});
 const W=960,H=400,DURATION=7,CONTACT=3.75,RELEASE=2.25;
+/* Review build: ?crisp=K renders the whole scene at K times the 960x400 coordinate space, so vector art, text and effects stay sharp on high-resolution video. Player sprites top out at their painted cell resolution (about 280x210) at any K. K=1 keeps the live behaviour. */
+const CRISP=Math.max(1,Math.min(4,parseFloat(new URLSearchParams(location.search).get('crisp')||'1')||1));
+canvas.width=W*CRISP;canvas.height=H*CRISP;
+function baseX(){ctx.setTransform(CRISP,0,0,CRISP,0,0);}
 const clamp=x=>Math.max(0,Math.min(1,x)),mix=(a,b,t)=>a+(b-a)*t;
 const ease=(a,b,t)=>{let u=clamp((t-a)/(b-a));return u*u*(3-2*u);};
 const pt=(x,y)=>({x,y}); const lerp=(a,b,u)=>pt(mix(a.x,b.x,u),mix(a.y,b.y,u));
@@ -61,11 +65,13 @@ function next(){if(ballNo===6){over++;ballNo=0;changeKits();newField();}
 function line(points,color,width){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}
 function poly(points,color){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=color;ctx.fill();}
 function ellipse(x,y,rx,ry,c){ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();}
+/* Review build: soft radial ground shadow, reads as light from above instead of a flat sticker. */
+function softShadow(x,y,rx,ry){let g=ctx.createRadialGradient(0,0,0,0,0,1);g.addColorStop(0,'rgba(5,18,14,.52)');g.addColorStop(.65,'rgba(5,18,14,.28)');g.addColorStop(1,'rgba(5,18,14,0)');ctx.save();ctx.translate(x,y);ctx.scale(rx,ry);ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);ctx.fill();ctx.restore();}
 function rect(x,y,w,h,c,r=0){ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
 function text(s,x,y,size=15,color='#eff8ed',align='left',weight=600){ctx.font=`${weight} ${size}px Arial,sans-serif`;ctx.textAlign=align;ctx.fillStyle=color;ctx.fillText(s,x,y);}
-const bg=document.createElement('canvas');bg.width=W;bg.height=H;
+const bg=document.createElement('canvas');bg.width=W*CRISP;bg.height=H*CRISP;
 // Lighting modes: 0 day, 1 golden hour, 2 night under floodlights. Rebuilt once per over.
-function stadium(mode){let sky=mode===2?['#040d1c','#12303c']:mode===1?['#2b2a4a','#7a4a52']:['#10273a','#244d55'];
+function stadium(mode){baseX();let sky=mode===2?['#040d1c','#12303c']:mode===1?['#2b2a4a','#7a4a52']:['#10273a','#244d55'];
  let g=ctx.createLinearGradient(0,0,0,400);g.addColorStop(0,sky[0]);g.addColorStop(.42,sky[1]);g.addColorStop(.49,mode===2?'#2c5c40':'#427a53');g.addColorStop(1,mode===2?'#0e2c22':'#173e33');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
  if(mode===1){let sg=ctx.createRadialGradient(760,120,10,760,120,220);sg.addColorStop(0,'#ffb45e88');sg.addColorStop(1,'#ffb45e00');ctx.fillStyle=sg;ctx.fillRect(0,0,W,H);ellipse(760,120,26,26,'#ffd9a0');}
  for(let row=0;row<4;row++){rect(0,72+row*15,960,12,mode===2?'#0c1c28':row%2?'#1d3845':'#172e3a');
@@ -79,7 +85,10 @@ function stadium(mode){let sky=mode===2?['#040d1c','#12303c']:mode===1?['#2b2a4a
  poly([pt(203,276),pt(780,276),pt(806,320),pt(178,320)],mode===2?'#a8916a':'#bea879');poly([pt(205,282),pt(780,282),pt(794,311),pt(190,311)],mode===2?'#b8a176':'#ccb98d');
  for(let x=210;x<790;x+=13){line([pt(x,285+(x%5)),pt(x+7,286+(x%5))],'#9e865a44',1);}
  for(let x of [253,718]){line([pt(x-8,278),pt(x-10,318)],'#f6f3dc',2);line([pt(x-37,318),pt(x+26,318)],'#f6f3dc',2);}
- if(mode!==0){let vg=ctx.createRadialGradient(480,220,140,480,220,560);vg.addColorStop(0,'#00000000');vg.addColorStop(1,mode===2?'#00081a55':'#1a0a2050');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);}}
+ /* Review build: atmosphere - soft haze over the far outfield, bloom around the light towers, and a gentle vignette in every lighting mode. */
+ let hz=ctx.createLinearGradient(0,140,0,272);hz.addColorStop(0,mode===2?'rgba(150,190,210,.10)':'rgba(200,225,220,.11)');hz.addColorStop(1,'rgba(200,225,220,0)');ctx.fillStyle=hz;ctx.fillRect(0,140,960,132);
+ if(mode!==0){ctx.save();ctx.globalCompositeOperation='lighter';for(let x of [63,892]){let bl=ctx.createRadialGradient(x,43,4,x,43,64);bl.addColorStop(0,mode===2?'rgba(255,252,225,.34)':'rgba(255,200,140,.20)');bl.addColorStop(1,'rgba(255,252,225,0)');ctx.fillStyle=bl;ctx.fillRect(x-64,0,128,140);}ctx.restore();}
+ let vg=ctx.createRadialGradient(480,220,140,480,220,560);vg.addColorStop(0,'#00000000');vg.addColorStop(1,mode===2?'#00081a55':mode===1?'#1a0a2050':'#02140f42');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);}
 function rebuildBG(){stadium(lightMode);bg.getContext('2d').drawImage(canvas,0,0);}
 // Whole-body player drawing. The quiz, audio, history and timing stay independent.
 const playerBase=new URL('cricket-players/',document.currentScript?.src||document.baseURI).href;
@@ -100,12 +109,12 @@ async function preparePlayers(p){if(assetPlay===p&&assetPromise)return assetProm
  if(assetPlay===p)humanReady=true;return true;})().catch(e=>{playerFailure=String(e.message||e);playerRetryAt=performance.now()+5000;console.error(e);return false;});return assetPromise;}
 function drawPlayer(id,pose,x,y,s=1,flip=false,kit=bowlKit){if(!playerManifest)return;let d=assetSpec(id),im=paintedPlayers.get(id+':'+kit.sig);if(!im)return;let j=Math.max(0,Math.min(d.n-1,Math.round(pose*d.step))),sx=(j%d.cols)*d.w,sy=Math.floor(j/d.cols)*d.h;ctx.save();ctx.translate(x,y);ctx.scale(flip?-s:s,s);ctx.drawImage(im,sx,sy,d.w,d.h,d.x,d.y,d.w,d.h);ctx.restore();}
 function poseAt(t,keys){let j=0;while(j<keys.length-2&&t>keys[j+1])j++;return t>=keys.at(-1)?keys.length-1:j+ease(keys[j],keys[j+1],t);}
-function batsman(t,p){if(!playerManifest)return;let id=shotAsset(p),d=playerManifest.bats[id],at=p.outcome.type==='bowled'?t-.30:t,pose=poseAt(at,d.keys);ellipse(337,310,48,4,'#102d2840');drawPlayer('bat:'+id,pose,0,0,1,false,batKit);}
+function batsman(t,p){if(!playerManifest)return;let id=shotAsset(p),d=playerManifest.bats[id],at=p.outcome.type==='bowled'?t-.30:t,pose=poseAt(at,d.keys);softShadow(337,311,62,9);drawPlayer('bat:'+id,pose,0,0,1,false,batKit);}
 function batGeometry(t,p){let id=shotAsset(p),d=playerManifest?.bats[id],c=d?.contact||[369.5,282.5];return {hand:pt(c[0]-4,c[1]-22),tip:pt(c[0]+1,c[1]+6),contact:pt(c[0],c[1]),step:ease(3.18,3.73,t),handed:p.batHand==='L'?-1:1};}
 // The front shoe reaches 70px ahead of the body in the delivery atlas.
 // Stop the body behind the crease until RELEASE; follow-through starts afterward.
 function bowlerState(t,p){let spin=['off','leg'].includes(deliveries[p.delivery].kind),run=clamp(t/2.1),after=ease(RELEASE,3.65,t),x=mix(spin?814:873,778,run)-after*70,y=305-(t<1.65?Math.abs(Math.sin(t*(spin?10:13)))*(spin?2:4):Math.sin(clamp((t-1.65)/.6)*Math.PI)*7),id=p.bowlHand==='L'?'bowlerL':'bowlerR',off=playerManifest?.roles[id]?.release||[-32.7163,-145.9065],scale=.90;return {x,y,hand:pt(x+off[0]*scale,y+off[1]*scale),spin,id,scale};}
-function bowler(t,p){let b=bowlerState(t,p),pose=t<1.65?0:t<RELEASE?1+3*ease(1.65,RELEASE,t):4+3*ease(RELEASE,3.65,t);ellipse(b.x,310,27,4,'#102d2840');if(t<1.65)drawPlayer('run',(t*(b.spin?5:7))%4,b.x,b.y,b.scale);else drawPlayer(b.id,pose,b.x,b.y,b.scale);}
+function bowler(t,p){let b=bowlerState(t,p),pose=t<1.65?0:t<RELEASE?1+3*ease(1.65,RELEASE,t):4+3*ease(RELEASE,3.65,t);softShadow(b.x,311,36,7);if(t<1.65)drawPlayer('run',(t*(b.spin?5:7))%4,b.x,b.y,b.scale);else drawPlayer(b.id,pose,b.x,b.y,b.scale);}
 // Fielder height follows ground depth; a player at the batter plane is full size.
 function fieldScale(y){return Math.max(.38,Math.min(1.06,(y-70)/240));}
 function catchTarget(p){let scale=Math.max(.38,Math.min(1.06,(p.landing.y-70)/(240-135)));return {x:p.landing.x-29*scale,y:p.landing.y+135*scale};}
@@ -114,13 +123,13 @@ function returnPose(t){return poseAt(t,[4.9,5.12,5.35,5.7,6.05,6.3,6.55,6.9]);}
 function collectedPoint(p){let f=fieldTarget(p);if(!f)return null;let off=playerManifest?.roles.return.balls?.[0]||[7,-3],flip=f.x>670;return pt(f.x+off[0]*f.scale*(flip?-1:1),f.y+off[1]*f.scale);}
 function fieldReturnBall(t,p){let f=fieldTarget(p);if(!f||t<6.05||t>6.85||!playerManifest)return null;let flip=f.x>670,off=playerManifest.roles.return.release||[35,-100],a=pt(f.x+off[0]*f.scale*(flip?-1:1),f.y+off[1]*f.scale),v=clamp((t-6.05)/.8),b=pt(165+23*.95,305-33*.95),q=lerp(a,b,v);q.y-=Math.sin(v*Math.PI)*35;return q;}
 function fielder(x,y,s,k,catchU=0,keeper=false,skin='',jump=0){let t=sceneTime,p=scenePlay,call=fieldCall++;
- if(keeper){let take=p.outcome.type==='edge'||p.outcome.style==='sway',pose=take?(t<4.15?0:t<4.5?1:t<4.9?2:3):0;ellipse(165,310,27,4,'#102d2840');drawPlayer('keeperSide',pose,165,305,.95);return;}
+ if(keeper){let take=p.outcome.type==='edge'||p.outcome.style==='sway',pose=take?(t<4.15?0:t<4.5?1:t<4.9?2:3):0;softShadow(165,311,34,7);drawPlayer('keeperSide',pose,165,305,.95);return;}
 
  let focus=ballPosition(t,p);if(!focus&&t>=RELEASE){for(let q=t-.1;q>=RELEASE&&!focus;q-=.1)focus=ballPosition(q,p);}focus=focus||bowlerState(Math.min(t,RELEASE),p).hand;let pose=0,flip=focus.x<x,target=fieldTarget(p),useReturn=false;
  if(call===0&&p.outcome.type==='catch'){let move=ease(3.8,5.1,t),f0=fieldSpots[0],dest=catchTarget(p);x=mix(f0.x,dest.x,move);y=mix(f0.y,dest.y,move);if(t<3.8)pose=0;else if(t<4.9){pose=2.5+.5*Math.sin((t-3.8)*16);flip=false;y-=Math.abs(Math.sin((t-3.8)*16))*2;}else if(t<5.05)pose=3+ease(4.9,5.05,t);else if(t<5.4)pose=4+ease(5.05,5.4,t);else pose=5+ease(5.4,5.85,t);
  }else if(target&&call===target.who){if(target.who===0){let f0=fieldSpots[0],move=ease(3.8,4.9,t);x=mix(f0.x,target.x,move);y=mix(f0.y,target.y,move);if(t>3.8&&t<4.9){pose=2.5+.5*Math.sin((t-3.8)*16);flip=target.x<f0.x;}}if(t>=4.9){useReturn=true;pose=returnPose(t);flip=target.x>670;}else if(target.who!==0){pose=ease(4.3,4.9,t);}}
  else if(p.outcome.type==='runs'&&t>CONTACT){pose=.25*ease(CONTACT,4.4,t);flip=focus.x<x;}
- s=fieldScale(y);let paint=()=>{ellipse(x,y+3,22*s,3*s,'#102d2840');drawPlayer(useReturn?'return':'fielder',pose,x,y,s,flip);if(useReturn&&t>5.0&&t<6.05){let balls=playerManifest.roles.return.balls,j=Math.min(3,Math.floor(pose)),a=balls[j],b=balls[j+1];if(a&&b){let off=lerp(pt(...a),pt(...b),pose-j);ellipse(x+off.x*s*(flip?-1:1),y+off.y*s,3.5,3.5,'#f6f6ec');}}};if(y>305)nearFielders.push(paint);else paint();
+ s=fieldScale(y);let paint=()=>{softShadow(x,y+3,30*s,5*s);drawPlayer(useReturn?'return':'fielder',pose,x,y,s,flip);if(useReturn&&t>5.0&&t<6.05){let balls=playerManifest.roles.return.balls,j=Math.min(3,Math.floor(pose)),a=balls[j],b=balls[j+1];if(a&&b){let off=lerp(pt(...a),pt(...b),pose-j);ellipse(x+off.x*s*(flip?-1:1),y+off.y*s,3.5,3.5,'#f6f6ec');}}};if(y>305)nearFielders.push(paint);else paint();
 }
 
 // The pitch end projects from (203,276) to (178,320).
@@ -196,7 +205,7 @@ function shotFire(t,p){let o=p.outcome;if(t<=CONTACT||o.type==='bowled'||o.style
  }
  let hot=2.5+power*5;ellipse(ball.x,ball.y,hot*1.7,hot*1.7,`rgba(255,116,12,${.12+power*.13})`);
 }
-function render(t,p=play){sceneTime=t;scenePlay=p;fieldCall=0;nearFielders=[];ctx.drawImage(bg,0,0);ctx.save();if(p.batHand==='L'){ctx.translate(W,0);ctx.scale(-1,1);}
+function render(t,p=play){sceneTime=t;scenePlay=p;fieldCall=0;nearFielders=[];ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(bg,0,0);baseX();ctx.save();if(p.batHand==='L'){ctx.translate(W,0);ctx.scale(-1,1);}
  let c=camAt(t,p);ctx.translate(W/2,H/2);ctx.scale(c.z,c.z);ctx.translate(-c.cx,-c.cy);
  let catchU=p.outcome.type==='catch'?ease(4.3,5.4,t):0,jumpU=p.outcome.type==='catch'?Math.sin(clamp((t-4.5)/.9)*Math.PI)*10:0;
  let f0=fieldSpots[0]||pt(480,222),fx=mix(f0.x,p.landing.x,ease(3.8,5.4,t)),fy=mix(f0.y,p.landing.y+60,ease(3.8,5.4,t));
@@ -209,6 +218,7 @@ function render(t,p=play){sceneTime=t;scenePlay=p;fieldCall=0;nearFielders=[];ct
  dust(t,p);batsman(t,p);bowler(t,p);nearFielders.forEach(paint=>paint());
  motionTrail(t,p);shotFire(t,p);
  let ball=ballPosition(t,p);if(ball){ellipse(ball.x+1,Math.max(308,ball.y+7),5,1.8,'#153b3433');
+  ctx.save();ctx.globalCompositeOperation='lighter';ellipse(ball.x,ball.y,7.5,7.5,'rgba(255,255,235,.16)');ctx.restore();
   ellipse(ball.x,ball.y,4.5,4.5,'#ffffff');let spin=t*(t>CONTACT?15+shotMotion(p).power*40:30),dx=Math.cos(spin)*2.7,dy=Math.sin(spin)*2.7;line([pt(ball.x-dx,ball.y-dy),pt(ball.x+dx,ball.y+dy)],'#d57565',1);}
  crowdJump(t,p,t>outcomeTime(p)&&(p.outcome.type!=='runs'||p.outcome.runs>=4));
  rgbFx(t,p);
