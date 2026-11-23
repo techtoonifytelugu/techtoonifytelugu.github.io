@@ -6,7 +6,7 @@ var P=new URLSearchParams(location.search);
 var SIM=P.get('sim')==='1',AUTO=P.get('auto')==='1', FAST=parseFloat(P.get('speed')||'1');
 var DAY=parseInt(P.get('day')||'0',10)||0; /* 0 = day picker; 1-3 = that day's unseen questions only */
 var DBG=P.get('debug')==='1',EV=[],T0=Date.now();
-function ev(k){if(DBG){var fs=$('face').src;EV.push({t:Date.now()-T0,ev:k,face:fs.indexOf('sad')>=0?'sad':fs.indexOf('tease')>=0?'tease':'smile'});}}
+function ev(k){if(DBG){var fs=$('face').src;EV.push({t:Date.now()-T0,ev:k,face:fs.indexOf('laugh')>=0?'laugh':fs.indexOf('sad')>=0?'sad':fs.indexOf('tease')>=0?'tease':'smile'});}}
 /* 3-day programme progress lives under its own key: the old iplquiz.seen.v5 test history is left untouched in storage, and the programme starts with every question fresh (prior exposure was private tests only). Within the programme a question once shown never reappears on any day. */
 var KEY='iplquiz.days.v1';
 var seen={};try{seen=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
@@ -56,18 +56,21 @@ var TEASE=[
  'హ్మ్... ఈ ఆప్షన్ మీద నాకు డౌట్ వస్తోంది!',
  'క్రికెట్ ఫ్యాన్స్ అంటే ఇలాంటివి ఈజీగా చెప్పేయాలి కదా!',
  'ఎవరు ముందు కరెక్ట్ చెబుతారో చూద్దాం!'];
-var HAPPY=['మిని నవ్వుతోంది! నా అంచనా కరెక్ట్!','యెస్! మిని కరెక్ట్ గా పట్టేసింది!','సూపర్! ఈ సారి నాదే గెలుపు!'];
-var SAD=['అయ్యో! ఈ సారి మిని తప్పు చెప్పింది...','ఆహ్, నా అంచనా తప్పింది!','అరెరే, ఇది నాకు కష్టమైంది!'];
+/* user request 2026-11-23: Mini's own result lines. Correct guess: after the answer narration fully ends. Wrong guess: before the answer narration (verdict first, then the answer for viewers) */
+var REACT_OK='సరైన సమాధానం! Congratulations మిని!';
+var REACT_NO='ఈ సారి కాదు! Better luck next time!';
+var REACT_DUR_OK=3600,REACT_DUR_NO=4200; /* measured reaction clip lengths (ms); the miss path never blocks longer than maxMs */
+var REACT_MS=3900; /* average reaction length, used only for day-length estimates */
 var TAGS={E:'EASY',M:'MEDIUM',H:'HARD'};
 var ENDTXT={0:['ఈ రౌండ్ ముగిసింది!','చూసినందుకు ధన్యవాదాలు. త్వరలో మళ్ళీ కలుద్దాం!'],1:['దినం 1 ముగిసింది!','రేపు దినం 2తో కలుద్దాం! జై ఐపీఎల్!'],2:['దినం 2 ముగిసింది!','రేపు చివరి రోజు. దినం 3తో కలుద్దాం!'],3:['దినం 3 ముగిసింది!','మూడు రోజుల ఐపీఎల్ క్విజ్ పూర్తయింది. చూసినందుకు ధన్యవాదాలు!']};
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
-function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/sad.png';var av=f.parentNode;av.classList.remove('teasing');av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
+function setFace(ok){var f=$('face');f.src=ok?'img/smile.png':'img/14-laugh.png';var av=f.parentNode;av.classList.remove('teasing');av.classList.remove('pop');void av.offsetWidth;av.classList.add('pop');}
 /* playful mocking waggle every tease (~5s during the timer); never swaps the face, so it can't hint the result */
 var teaseT=null;(new Image()).src='img/tease.png';
 function teaseFace(){var f=$('face'),av=f.parentNode;av.classList.remove('teasing');void av.offsetWidth;av.classList.add('teasing');
- if(f.src.indexOf('sad.png')<0)f.src='img/tease.png';
+ if(f.src.indexOf('sad.png')<0&&f.src.indexOf('laugh.png')<0)f.src='img/tease.png';
  clearTimeout(teaseT);teaseT=setTimeout(function(){if(f.src.indexOf('tease.png')>=0)f.src='img/smile.png';},1400/FAST);
  ev('tease-face');}
 $('face').parentNode.addEventListener('animationend',function(e){if(e.animationName==='tease')this.classList.remove('teasing');});
@@ -89,7 +92,9 @@ function renderQ(q,n){
  setFace(true);$('cstate').textContent='';$('cstate').className='chitti-state';$('ctease').textContent='';$('cans').textContent='';
  var ds=$('dots');ds.innerHTML='';for(var i=0;i<5;i++){var e=document.createElement('div');e.className='dot'+(i<(n-1)%5+1?'':' off');ds.appendChild(e);}
 }
-function miniGuess(q){var h=hash('m'+q.id)%100;if(h<72)return q.c;var w=[0,1,2,3].filter(function(i){return i!==q.c});return w[h%w.length];}
+/* test hook: ?rig=1,3 forces the next guesses; normal play is a fresh uniform random pick every question (user request 2026-11-23, no correct-answer bias) */
+var RIG=(P.get('rig')||'').split(',').filter(function(s){return s!=='';});
+function miniGuess(q){if(RIG.length)return parseInt(RIG.shift(),10)&3;return Math.floor(Math.random()*4);}
 async function timerPhase(q,guess){
  var start=Date.now(),total=(TIMER_TIER[q.tier]||TIMER_MS)/FAST,lastTick=-1,nextTease=1800/FAST,ti=0;
  var guessAt=8000/FAST,guessed=false;
@@ -118,31 +123,48 @@ async function runQuestion(q,n){
  await sleep(500);
  await playClip(qa,q.qd+8000,q.qd);
  var guess=miniGuess(q);
+ var ok=guess===q.c;
+ var ra=loadClip(ok?'10-react-correct':'11-react-wrong'); /* preloads during the thinking timer */
  prefetch(NEXT);
  await timerPhase(q,guess);
- /* reveal: every result-revealing change (score, highlight, expression, guess) fires only when the answer audio actually starts playing; the fallback runs only if the clip itself failed, so the expression can never precede the voice */
- var ok=guess===q.c;
+ /* reveal split (user request 2026-11-23): on a wrong guess the laugh/retry verdict plays FIRST, then the answer narration for viewers. Verdict UI (face, Mini's line, score) fires with whichever voice carries the verdict; the correct-answer highlight and reason still fire only when the answer audio actually starts, so the answer is never revealed early. Fallbacks run only if a clip itself failed. */
  await sleep(350);
- ev('answer-play-invoked');
- var revealed=false;
- function reveal(src){if(revealed)return;revealed=true;ev(src);
+ var verdictShown=false;
+ function showVerdict(src){if(verdictShown)return;verdictShown=true;ev(src);
   score+=ok?1:0;
-  for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
   $('score').textContent='మిని స్కోరు '+score+' / '+n;
   setFace(ok);sfx(ok?'ding':'sad');
-  $('cstate').textContent=pick(ok?HAPPY:SAD);$('cstate').className='chitti-state'+(ok?'':' sad');
+  $('cstate').textContent=ok?REACT_OK:REACT_NO;$('cstate').className='chitti-state'+(ok?'':' sad');
+  $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);}
+ var answerShown=false;
+ function showAnswer(src){if(answerShown)return;answerShown=true;ev(src);
+  for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
   $('ctease').textContent=q.why;
-  $('cans').innerHTML='';var b=document.createElement('b');b.textContent='మిని అంచనా: '+'ABCD'[guess]+'. '+q.ote[guess];$('cans').appendChild(b);
   ev('reveal-ui');}
- var played=playClip(aa,q.ad+8000,q.ad,function(){reveal('answer-playing');});
- if(P.get('hold')==='reveal'){await new Promise(function(){});}
- await played;reveal('reveal-fallback');ev('answer-voice-end');
+ var played;
+ if(ok){
+  /* correct guess: answer narration, then the congratulations reaction (reviewed flow, unchanged) */
+  ev('answer-play-invoked');
+  played=playClip(aa,q.ad+8000,q.ad,function(){showVerdict('verdict-answer-start');showAnswer('answer-playing');});
+  if(P.get('hold')==='reveal'){await new Promise(function(){});}
+  await played;showVerdict('verdict-fallback');showAnswer('reveal-fallback');ev('answer-voice-end');
+  ev('react-play-invoked');await playClip(ra,REACT_DUR_OK+8000,REACT_DUR_OK);ev('react-voice-end');
+ }else{
+  /* wrong guess: laugh/retry reaction first, then the correct-answer narration; if a clip fails, the shown text/face stay and the quiz moves on */
+  ev('react-play-invoked');
+  await playClip(ra,REACT_DUR_NO+8000,REACT_DUR_NO,function(){showVerdict('verdict-react-start');});
+  showVerdict('verdict-react-fallback');ev('react-voice-end');
+  ev('answer-play-invoked');
+  played=playClip(aa,q.ad+8000,q.ad,function(){showAnswer('answer-playing');});
+  if(P.get('hold')==='reveal'){await new Promise(function(){});}
+  await played;showAnswer('reveal-fallback');ev('answer-voice-end');
+ }
  await sleep(GAP_MS);
 }
 var DATA_PROMISE=null;
 function loadData(){if(!DATA_PROMISE){DATA_PROMISE=(async function(){for(;;){try{D=await (await fetch('data.json?'+Date.now())).json();return D}catch(e){await sleep(5000)}}})();}return DATA_PROMISE;}
 function fmtDur(ms){var h=ms/3600000;return h>=1?(Math.round(h*10)/10)+' గంటలు':Math.max(1,Math.round(ms/60000))+' నిమిషాలు';}
-function dayStats(d){var tot=0,un=0,ms=0;D.questions.forEach(function(q){if((q.day||1)!==d)return;tot++;if(!seen[q.id]){un++;ms+=(q.qd||13000)+(q.ad||9000)+2250+(TIMER_TIER[q.tier]||TIMER_MS);}});return{total:tot,unseen:un,ms:ms};}
+function dayStats(d){var tot=0,un=0,ms=0;D.questions.forEach(function(q){if((q.day||1)!==d)return;tot++;if(!seen[q.id]){un++;ms+=(q.qd||13000)+(q.ad||9000)+2250+REACT_MS+(TIMER_TIER[q.tier]||TIMER_MS);}});return{total:tot,unseen:un,ms:ms};}
 function buildPicker(){var box=$('daybtns');if(!box)return;box.innerHTML='';
  [1,2,3].forEach(function(d){var st=dayStats(d),b=document.createElement('button');b.className='daybtn';
   if(!st.unseen){b.disabled=true;b.innerHTML='<b>దినం '+d+'</b><span>పూర్తయింది ✓</span>';}
@@ -179,7 +201,7 @@ if(AUTO){ // OBS / kiosk: pick the earliest day with fresh questions, then try t
 
 async function sweep(){
  D=await (await fetch('data.json')).json();var res=[];
- var wh=HAPPY.concat(SAD).sort(function(a,b){return b.length-a.length})[0];
+ var wh=[REACT_OK,REACT_NO].sort(function(a,b){return b.length-a.length})[0];
  D.questions.forEach(function(q,k){
   renderQ(q,k+1);
   for(var i=0;i<4;i++){$('o'+i).classList.add(i===q.c?'correct':'dim');}
