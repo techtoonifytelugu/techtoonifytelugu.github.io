@@ -41,13 +41,14 @@
 </div></div>
 <style>.daybtn:not(.fullday){display:none!important}</style>
 <script>
-/* Short edition: same game and assets as ../quiz/, restricted to questions that do not repeat in earlier IPL/cricket/GK games. Nothing in ../quiz/ is changed. */
-(function(){var KEEP=["0128", "0541", "1001", "1002", "1005", "1006", "1007", "1008", "1009", "1011", "1012", "1014", "1015", "1016", "1017", "1018", "1020", "1021", "1022", "1023", "1024", "1025", "1026", "1027", "1028", "1031", "1032", "1033", "1034", "1035", "1036", "1037", "1038", "1039", "1040", "1041", "1042", "1043", "1045", "1046", "1050", "1054", "1055", "1056", "1057", "1058", "1059", "1061", "1062", "1065", "1066", "1067", "1069", "1072", "1073", "1076", "1078", "1080", "1082", "1084", "1087", "1088", "1089", "1091", "1092", "1093", "1095", "1096", "1100", "1101", "1102", "1104", "1107", "1110", "1112", "1115", "1117", "1118", "1119", "1122", "1123", "1124", "1128", "1130", "1133", "1134", "1139", "1142", "1144", "1145", "1146", "1148", "1151", "1152", "1155", "1158", "1159", "1160", "1163", "1165", "1166", "1169", "1171", "1172", "1173", "1174", "1175", "1176", "1177", "1179", "1181", "1186", "1188", "1189", "1192", "1193", "1194", "1196", "1197", "1201", "1202", "1204", "1205", "1208", "1210", "1211", "1212", "1213"];var KS={};KEEP.forEach(function(k){KS[k]=1});
-var of=window.fetch;window.fetch=function(u,o){var s=String(u&&u.url||u);if(s.indexOf('data.json')<0)return of.apply(this,arguments);
-return of.apply(this,arguments).then(function(r){return r.json().then(function(d){d.questions=d.questions.filter(function(q){return KS[q.id]});return new Response(JSON.stringify(d),{status:200,headers:{'Content-Type':'application/json'}})})})};
+/* Short edition: same game code and clips as ../quiz/, but a frozen 128-question list (short-data.json next to this page) and its own progress key. Nothing in ../quiz/ is read for questions or changed. */
+(function(){var DATA=new URL('short-data.json',location.origin+location.pathname.replace(/[^\/]*$/,'')).href;
+var OK='iplquiz.days.v1',NK='iplquiz.short.v1';var P=Storage.prototype,g=P.getItem,s=P.setItem,r=P.removeItem;
+P.getItem=function(k){return g.call(this,k===OK?NK:k)};P.setItem=function(k,v){return s.call(this,k===OK?NK:k,v)};P.removeItem=function(k){return r.call(this,k===OK?NK:k)};
+var of=window.fetch;window.fetch=function(u,o){var t=String(u&&u.url||u);if(t.indexOf('data.json')<0)return of.apply(this,arguments);return of.call(this,DATA,{cache:'no-store'})};
 document.addEventListener('DOMContentLoaded',function(){var ds=document.getElementById('daysub');if(ds)ds.textContent='చిన్న ఎడిషన్ · కొత్త ప్రశ్నలు మాత్రమే / Short edition';
 var dn=document.querySelector('.daynote');if(dn)dn.style.display='none';
-var e=document.getElementById('end');if(e){new MutationObserver(function(){if(e.style.display==='flex'){var a=e.querySelector('.big2'),b=e.querySelector('.endsub');if(a&&a.textContent.indexOf('షార్ట్')<0){a.textContent='ఈ షో ముగిసింది!';b.textContent='ఈ ఎడిషన్ ప్రశ్నలన్నీ పూర్తయ్యాయి. చూసినందుకు ధన్యవాదాలు! జై ఐపీఎల్!';}}}).observe(e,{attributes:true,attributeFilter:['style']});}});})();
+var e=document.getElementById('end');if(e){new MutationObserver(function(){if(e.style.display==='flex'){var a=e.querySelector('.big2'),b=e.querySelector('.endsub');if(a&&a.textContent!=='ఈ షో ముగిసింది!'){a.textContent='ఈ షో ముగిసింది!';b.textContent='ఈ ఎడిషన్ ప్రశ్నలన్నీ పూర్తయ్యాయి. చూసినందుకు ధన్యవాదాలు! జై ఐపీఎల్!';}}}).observe(e,{attributes:true,attributeFilter:['style']});}});})();
 </script>
 <script src="game.js?v=13"></script>
 <script src="4-cricket-2d.js?v=5"></script>
