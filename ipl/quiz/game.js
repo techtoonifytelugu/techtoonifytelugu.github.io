@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)};
-var TIMER_MS=12000, TIMER_TIER={E:20000,M:25000,H:30000}, GAP_MS=1400, TEASE_EVERY=5000; /* per-tier thinking time: easy 20s, medium 25s, hard 30s (user-approved pace) */
+var TIMER_MS=12000, TIMER_TIER={E:20000,M:25000,H:30000}, GAP_MS=1400, FULL_GAP_MS=3000, TEASE_EVERY=5000; /* full 3-day show gets a 3s beat between questions so the combined programme runs a true ~10 hours (651 questions: voices + tier timers + Mini reactions + 3s beats = 10.0h) */ /* per-tier thinking time: easy 20s, medium 25s, hard 30s (user-approved pace) */
 var P=new URLSearchParams(location.search);
 var SIM=P.get('sim')==='1',AUTO=P.get('auto')==='1', FAST=parseFloat(P.get('speed')||'1');
 var DAY=parseInt(P.get('day')||'0',10)||0; /* 0 = day picker; 1-3 = that day's unseen questions only; 9 = full show, all 3 days combined (~10h) */
@@ -160,12 +160,12 @@ async function runQuestion(q,n){
   if(P.get('hold')==='reveal'){await new Promise(function(){});}
   await played;showAnswer('reveal-fallback');ev('answer-voice-end');
  }
- await sleep(GAP_MS);
+ await sleep(DAY===9?FULL_GAP_MS:GAP_MS);
 }
 var DATA_PROMISE=null;
 function loadData(){if(!DATA_PROMISE){DATA_PROMISE=(async function(){for(;;){try{D=await (await fetch('data.json?'+Date.now())).json();return D}catch(e){await sleep(5000)}}})();}return DATA_PROMISE;}
 function fmtDur(ms){var h=ms/3600000;return h>=1?(Math.round(h*10)/10)+' గంటలు':Math.max(1,Math.round(ms/60000))+' నిమిషాలు';}
-function dayStats(d){var tot=0,un=0,ms=0;D.questions.forEach(function(q){if(d!==9&&(q.day||1)!==d)return;tot++;if(!seen[q.id]){un++;ms+=(q.qd||13000)+(q.ad||9000)+2250+REACT_MS+(TIMER_TIER[q.tier]||TIMER_MS);}});return{total:tot,unseen:un,ms:ms};}
+function dayStats(d){var tot=0,un=0,ms=0;D.questions.forEach(function(q){if(d!==9&&(q.day||1)!==d)return;tot++;if(!seen[q.id]){un++;ms+=(q.qd||13000)+(q.ad||9000)+850+(d===9?FULL_GAP_MS:GAP_MS)+REACT_MS+(TIMER_TIER[q.tier]||TIMER_MS);}});return{total:tot,unseen:un,ms:ms};}
 function buildPicker(){var box=$('daybtns');if(!box)return;box.innerHTML='';
  var fs=dayStats(9),fb=document.createElement('button');fb.className='daybtn fullday';
  if(!fs.unseen){fb.disabled=true;fb.innerHTML='<b>పూర్తి షో · 3 రోజులు కలిపి</b><span>పూర్తయింది ✓</span>';}
