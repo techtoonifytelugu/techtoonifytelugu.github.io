@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="te"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="robots" content="noindex"/>
+<title>IPL Quiz Show - manaandhrakurradu</title>
+<link rel="stylesheet" href="style.css?v=9"/>
+<link rel="stylesheet" href="cricket.css?v=3"/>
+</head><body>
+<div id="frame"><div id="stage">
+  <div class="kb"></div><div class="beams"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
+  <div class="vignette"></div>
+  <div class="hdr">
+    <div class="brand gold">ఐపీఎల్ క్విజ్ షో</div>
+    <div class="score"><div class="dots" id="dots"></div><div class="score-pill" id="score">మిని స్కోరు 0</div></div>
+  </div>
+  <div class="roundblock">
+    <div class="pre"><span id="qnum">ప్రశ్న 1</span> <span class="en">· Question <span id="qnumen">1</span></span></div>
+    <div class="big gold" id="roundname">ఐపీఎల్ క్విజ్</div>
+  </div>
+  <div class="qcard" id="qcard">
+    <div class="qmeta"><div class="tag" id="tag">EASY</div><div class="qtimer" id="timer">⏱ --</div></div>
+    <div class="qtext-te" id="qte"></div>
+    <div class="qtext-en" id="qen"></div>
+    <div class="tbar"><i id="tbar"></i></div>
+  </div>
+  <div class="opts" id="opts"></div>
+  <div class="chitti" id="chitti">
+    <div class="avatar"><img id="face" src="img/smile.png" alt=""/></div>
+    <div class="chitti-text">
+      <div class="chitti-name gold">మిని</div>
+      <div class="chitti-state" id="cstate"></div>
+      <div class="chitti-tease" id="ctease"></div>
+      <div class="chitti-ans" id="cans"></div>
+    </div>
+  </div>
+  <div class="cricket-display" aria-label="Silent cinematic 2D cricket: no exact play repeats, random handedness, bowling styles, shots and speeds, with new team kits and lighting every six balls"><canvas id="cricket-action" width="960" height="400" role="img" aria-label="Animated 2D cricket players"></canvas></div>
+  <div class="commentzone"><div class="rgb1"></div><div class="rgb2"></div><div class="rgb3"></div></div>
+  <div id="start"><div><div class="gold big2">ఐపీఎల్ క్విజ్ షో</div><div class="daysub" id="daysub" style="max-width:900px;margin-left:auto;margin-right:auto;line-height:1.4">దినం 2 + 3 కలిపి పూర్తి షో (~9 గంటలు), లేదా ఒక్క రోజు / Days 2+3 full show (~9 hrs), or one day</div><div class="daynote">టెస్ట్ పురోగతి విడిగా భద్రంగా ఉంది. ఈ కొత్త మూడు-రోజుల ప్రోగ్రామ్ కోసం ప్రతి ప్రశ్న ఫ్రెష్‌గా మొదలవుతుంది.</div><div id="daybtns"></div><button id="go" style="display:none">▶ ప్రారంభించండి / Start</button></div></div>
+  <div id="end"><div><div class="gold big2">ఈ రౌండ్ ముగిసింది!</div><div class="endsub">చూసినందుకు ధన్యవాదాలు. త్వరలో మళ్ళీ కలుద్దాం!</div></div></div>
+</div></div>
+<script src="game.js?v=f2-1"></script>
+<script src="4-cricket-2d.js?v=5"></script>
+</body></html>
